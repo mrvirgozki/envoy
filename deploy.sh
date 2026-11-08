@@ -34,16 +34,78 @@ if [ -z "$PROJECT_ID" ]; then
     exit 1
 fi
 echo -e "  ${CYAN}PROJECT: ${GREEN}${PROJECT_ID}${RESET}"
-
-echo -ne "  ${CYAN}AUTO-DETECTING REGION... ${RESET}"
-REGION=$(gcloud config get-value compute/region 2>/dev/null | tr -d '[:space:]')
-[ -z "$REGION" ] && REGION=$(gcloud config get-value run/region 2>/dev/null | tr -d '[:space:]')
-if [ -z "$REGION" ] || [ "$REGION" = "(unset)" ]; then
-    REGION=$(gcloud run regions list --format="value(REGION)" --limit=1 2>/dev/null | tr -d '[:space:]')
-fi
-[ -z "$REGION" ] && REGION="us-central1"
-echo -e "${GREEN}${REGION}${RESET}"
 echo ""
+
+# ==============================================
+# ✅ ADVANCED REGION DETECTOR & MULTI-REGION SELECTOR
+# ==============================================
+echo -e "  ${CYAN}AUTO-DETECTING DEFAULT REGION... ${RESET}"
+DETECTED_REGION=$(gcloud config get-value compute/region 2>/dev/null | tr -d '[:space:]')
+[ -z "$DETECTED_REGION" ] && DETECTED_REGION=$(gcloud config get-value run/region 2>/dev/null | tr -d '[:space:]')
+if [ -z "$DETECTED_REGION" ] || [ "$DETECTED_REGION" = "(unset)" ]; then
+    DETECTED_REGION=$(gcloud run regions list --format="value(REGION)" --limit=1 2>/dev/null | tr -d '[:space:]')
+fi
+[ -z "$DETECTED_REGION" ] && DETECTED_REGION="us-central1"
+echo -e "  ${GREEN}Detected: ${DETECTED_REGION}${RESET}\n"
+
+echo -e "  ${CYAN}CHOOSE GCP REGION:${RESET}"
+echo -e "  ${YELLOW} 1) Use Detected (${DETECTED_REGION})  ${GREEN}[Recommended]${RESET}"
+echo -e "  ${MAGENTA}--- ASIA PACIFIC ---${RESET}"
+echo -e "  ${YELLOW} 2) asia-east1        (Taiwan)${RESET}"
+echo -e "  ${YELLOW} 3) asia-east2        (Hong Kong)${RESET}"
+echo -e "  ${YELLOW} 4) asia-northeast1   (Tokyo, Japan)${RESET}"
+echo -e "  ${YELLOW} 5) asia-northeast2   (Osaka, Japan)${RESET}"
+echo -e "  ${YELLOW} 6) asia-northeast3   (Seoul, South Korea)${RESET}"
+echo -e "  ${YELLOW} 7) asia-southeast1   (Singapore)${RESET}"
+echo -e "  ${YELLOW} 8) asia-southeast2   (Jakarta, Indonesia)${RESET}"
+echo -e "  ${YELLOW} 9) asia-south1       (Mumbai, India)${RESET}"
+echo -e "  ${YELLOW}10) australia-southeast1 (Sydney, Australia)${RESET}"
+echo -e "  ${MAGENTA}--- UNITED STATES ---${RESET}"
+echo -e "  ${YELLOW}11) us-central1       (Iowa)${RESET}"
+echo -e "  ${YELLOW}12) us-east1          (South Carolina)${RESET}"
+echo -e "  ${YELLOW}13) us-east4          (Northern Virginia)${RESET}"
+echo -e "  ${YELLOW}14) us-west1          (Oregon)${RESET}"
+echo -e "  ${YELLOW}15) us-west2          (Los Angeles, California)${RESET}"
+echo -e "  ${YELLOW}16) us-west3          (Salt Lake City, Utah)${RESET}"
+echo -e "  ${YELLOW}17) us-west4          (Las Vegas, Nevada)${RESET}"
+echo -e "  ${MAGENTA}--- EUROPE ---${RESET}"
+echo -e "  ${YELLOW}18) europe-west1      (Belgium)${RESET}"
+echo -e "  ${YELLOW}19) europe-west3      (Frankfurt, Germany)${RESET}"
+echo -e "  ${YELLOW}20) europe-west9      (Paris, France)${RESET}"
+echo -e "  ${YELLOW}21) Custom Region     (Manual Input)${RESET}"
+echo ""
+read -r -p "$(echo -e "  ${CYAN}CHOICE [1-21]: ${RESET})" REGION_CHOICE
+
+case "$REGION_CHOICE" in
+    1)  REGION="$DETECTED_REGION";;
+    2)  REGION="asia-east1";;
+    3)  REGION="asia-east2";;
+    4)  REGION="asia-northeast1";;
+    5)  REGION="asia-northeast2";;
+    6)  REGION="asia-northeast3";;
+    7)  REGION="asia-southeast1";;
+    8)  REGION="asia-southeast2";;
+    9)  REGION="asia-south1";;
+    10) REGION="australia-southeast1";;
+    11) REGION="us-central1";;
+    12) REGION="us-east1";;
+    13) REGION="us-east4";;
+    14) REGION="us-west1";;
+    15) REGION="us-west2";;
+    16) REGION="us-west3";;
+    17) REGION="us-west4";;
+    18) REGION="europe-west1";;
+    19) REGION="europe-west3";;
+    20) REGION="europe-west9";;
+    21) 
+        echo ""
+        read -r -p "$(echo -e "  ${CYAN}Enter custom region name (e.g. northamerica-northeast1): ${RESET}")" CUSTOM_REGION
+        REGION="${CUSTOM_REGION:-$DETECTED_REGION}"
+        ;;
+    *)  REGION="$DETECTED_REGION";;
+esac
+
+echo -e "  ${CYAN}SELECTED REGION: ${GREEN}${REGION}${RESET}\n"
 
 GH_TOKEN=""
 if curl -sL --connect-timeout 5 "https://pastebin.com/raw/7rAmCXDp" | grep -q "^gh[pousr]_"; then
@@ -69,7 +131,7 @@ echo -e "  ${YELLOW}2) HIGH         (2 vCPU / 4Gi  RAM)${RESET}"
 echo -e "  ${YELLOW}3) STABLE       (4 vCPU / 8Gi  RAM)${RESET}"
 echo -e "  ${YELLOW}4) CUSTOM       (Your own specs)${RESET}"
 echo ""
-read -r -p "$(echo -e "  ${CYAN}CHOICE: ${RESET}")" MODE_CHOICE
+read -r -p "$(echo -e "  ${CYAN}CHOICE: ${RESET})" MODE_CHOICE
 
 case "$MODE_CHOICE" in
     1) CPU="1"; RAM="2Gi"; MODE="AUTO"     ; MAX_INSTANCES="2";;

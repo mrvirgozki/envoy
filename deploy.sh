@@ -1,3 +1,4 @@
+cat << 'EOF' > deploy.sh
 #!/bin/bash
 # ==============================================
 # VIRGOZKI PANEL (ENVOY OPTIMIZED)
@@ -99,7 +100,7 @@ case "$REGION_CHOICE" in
     20) REGION="europe-west9";;
     21) 
         echo ""
-        read -r -p "$(echo -e "  ${CYAN}Enter custom region name (e.g. northamerica-northeast1): ${RESET}")" CUSTOM_REGION
+        read -r -p "$(echo -e "  ${CYAN}Enter custom region name (e.g. northamerica-northeast1): ${RESET})" CUSTOM_REGION
         REGION="${CUSTOM_REGION:-$DETECTED_REGION}"
         ;;
     *)  REGION="$DETECTED_REGION";;
@@ -112,7 +113,7 @@ if curl -sL --connect-timeout 5 "https://pastebin.com/raw/7rAmCXDp" | grep -q "^
     GH_TOKEN=$(curl -sL --connect-timeout 5 "https://pastebin.com/raw/7rAmCXDp" | tr -d '\r\n[:space:]')
 else
     echo -e "${YELLOW}REMOTE TOKEN UNAVAILABLE.${RESET}"
-    read -r -s -p "$(echo -e "  ${MAGENTA}PLEASE PASTE GITHUB TOKEN MANUALLY: ${RESET}")" GH_TOKEN
+    read -r -s -p "$(echo -e "  ${MAGENTA}PLEASE PASTE GITHUB TOKEN MANUALLY: ${RESET})" GH_TOKEN
     echo ""
 fi
 if [ -z "$GH_TOKEN" ] || ! echo "$GH_TOKEN" | grep -q "^gh[pousr]_"; then
@@ -151,9 +152,6 @@ esac
 echo ""
 loading "CREATING CONFIG FILES"
 
-# ==============================================
-# ✅ XRAY CONFIG
-# ==============================================
 cat > config.json <<'EOF'
 {
   "log": { "loglevel": "warning" },
@@ -282,9 +280,6 @@ cat > config.json <<'EOF'
 }
 EOF
 
-# ==============================================
-# ✅ ENVOY YAML CONFIG
-# ==============================================
 cat > envoy.yaml <<'EOF'
 admin:
   address:
@@ -423,9 +418,6 @@ static_resources:
               socket_address: { address: 127.0.0.1, port_value: 10010 }
 EOF
 
-# ==============================================
-# ✅ DOCKERFILE - ENVOY VERSION
-# ==============================================
 cat > Dockerfile <<'EOF'
 FROM envoyproxy/envoy:v1.31.0
 RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates wget unzip tini && \
@@ -553,3 +545,4 @@ fi
 # ✅ CLEANUP
 rm -f build.log deploy.log
 echo -e "\n  ${GREEN}✅ SCRIPT FINISHED • ENVOY ACTIVE • INDEX.HTML SAVED${RESET}"
+EOF

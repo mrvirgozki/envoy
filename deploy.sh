@@ -1,6 +1,6 @@
 #!/bin/bash
 # ==============================================================================
-# VIRGOZKI PANEL • NGINX EDITION (WS + HU ONLY) - MODULAR DEPLOY
+# VIRGOZKI PANEL • ENVOY EDITION (WS + HU ONLY) - MODULAR DEPLOY
 # ==============================================================================
 
 BOLD='\033[1m'; RESET='\033[0m'

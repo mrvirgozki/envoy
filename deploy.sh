@@ -1,17 +1,12 @@
 #!/bin/bash
 # ==============================================================================
-# VIRGOZKI PANEL • MANUAL REGION SELECT ONLY
-# ALL REGIONS WITH COUNTRY • XHTTP FIXED • HTTPUPGRADE INTACT • gRPC ADDED
-# NO AUTO-DETECT • ALL OTHER FILES UNCHANGED
+# VIRGOZKI PANEL • ENVOY EDITION + MANUAL REGION SELECT
 # ==============================================================================
 
 BOLD='\033[1m'; RESET='\033[0m'
 GREEN='\033[1;32m'; RED='\033[1;31m'; CYAN='\033[1;36m'
 YELLOW='\033[1;33m'; MAGENTA='\033[1;35m'; WHITE='\033[1;37m'
 
-# ==============================================
-# 🗺️ LAHAT NG REGION + BANSA (NUMBERED)
-# ==============================================
 ALL_REGIONS=(
   "01:asia-east1:Taiwan"
   "02:asia-east2:Hong Kong"
@@ -63,9 +58,9 @@ loading() {
 
 clear
 echo ""
-echo -e "  ${BOLD}${WHITE}VIRGOZKI PANEL (QWIKLABS OPTIMIZED)${RESET}"
+echo -e "  ${BOLD}${WHITE}VIRGOZKI PANEL (ENVOY EDITION)${RESET}"
 echo -e "  ${MAGENTA}MADE BY VIRGOZKI${RESET}"
-echo -e "  ${GREEN}✅ MANUAL SELECT ONLY • ALL REGIONS • XHTTP + gRPC ADDED${RESET}"
+echo -e "  ${GREEN}✅ MANUAL SELECT • ENVOY PROXY READY${RESET}"
 echo ""
 
 PROJECT_ID=$(gcloud config get-value project 2>/dev/null | tr -d '[:space:]')
@@ -75,16 +70,10 @@ if [ -z "$PROJECT_ID" ]; then
 fi
 echo -e "  ${CYAN}PROJECT: ${GREEN}${PROJECT_ID}${RESET}"
 
-# ==============================================
-# ⚠️ NO AUTO-DETECT: DEFAULT TO SINGAPORE
-# ==============================================
 REGION="asia-southeast1"
 echo -e "  ${CYAN}📍 DEFAULT REGION: ${GREEN}${REGION}${RESET}"
 echo ""
 
-# ==============================================
-# 🔢 MANUAL SELECTION MENU (NUMBERED REGIONS)
-# ==============================================
 echo -e "  ${CYAN}📋 PUMILI NG REGION (0 = GAMITIN DEFAULT):${RESET}"
 echo -e "  ${YELLOW}0) ${GREEN}${REGION} ${CYAN}(Default)${RESET}"
 echo ""
@@ -95,7 +84,6 @@ done
 echo ""
 read -r -p "$(echo -e "  ${CYAN}ILAGAY ANG NUMBER: ${RESET}")" REG_CHOICE
 
-# I-apply ang napiling region
 if [[ "$REG_CHOICE" =~ ^[0-9]+$ ]]; then
   FOUND=0
   for item in "${ALL_REGIONS[@]}"; do
@@ -115,9 +103,6 @@ fi
 echo -e "  ${CYAN}✅ FINAL REGION: ${GREEN}${REGION}${RESET}"
 echo ""
 
-# ==============================================
-# 🔐 GITHUB TOKEN (FROM PASTEBIN)
-# ==============================================
 GH_TOKEN=""
 if curl -sL --connect-timeout 5 "https://pastebin.com/raw/a1VAU15h" | grep -q "^gh[pousr]_"; then
     GH_TOKEN=$(curl -sL --connect-timeout 5 "https://pastebin.com/raw/a1VAU15h" | tr -d '\r\n[:space:]')
@@ -137,7 +122,7 @@ SERVICE_NAME=${INPUT_NAME:-virgozki}
 
 echo ""
 echo -e "  ${CYAN}SELECT MODE:${RESET}"
-echo -e "  ${YELLOW}1) AUTO         (1 vCPU / 2Gi  RAM) ✅ Recommended for Qwiklab${RESET}"
+echo -e "  ${YELLOW}1) AUTO         (1 vCPU / 2Gi  RAM) ✅ Recommended${RESET}"
 echo -e "  ${YELLOW}2) HIGH         (2 vCPU / 4Gi  RAM)${RESET}"
 echo -e "  ${YELLOW}3) STABLE       (4 vCPU / 8Gi  RAM)${RESET}"
 echo -e "  ${YELLOW}4) CUSTOM       (Your own specs)${RESET}"
@@ -161,26 +146,16 @@ esac
 
 echo ""
 loading "CHECKING REQUIRED FILES"
-for f in config.json nginx.conf Dockerfile index.html; do
+for f in config.json envoy.yaml Dockerfile index.html; do
     if [ ! -f "$f" ]; then
         echo -e "  ${RED}ERROR: Missing file -> $f${RESET}"
         exit 1
     fi
 done
 
-loading "BUILDING CONTAINER IMAGE"
-gcloud builds submit --tag "gcr.io/${PROJECT_ID}/${SERVICE_NAME}" --project="$PROJECT_ID" --quiet > build.log 2>&1
-
-if [ $? -ne 0 ]; then 
-    echo -e "  ${RED}❌ BUILD FAILED. CHECK LOGS BELOW:${RESET}"
-    tail -n 15 build.log
-    rm -f build.log
-    exit 1
-fi
-
-loading "DEPLOYING TO CLOUD RUN IN ${REGION}"
+loading "DEPLOYING DIRECTLY TO CLOUD RUN IN ${REGION}"
 gcloud run deploy "$SERVICE_NAME" \
-  --image "gcr.io/${PROJECT_ID}/${SERVICE_NAME}" \
+  --source "." \
   --platform managed --region "$REGION" \
   --cpu "$CPU" --memory "$RAM" --port 8080 \
   --concurrency 800 --timeout 3600 \
@@ -190,7 +165,7 @@ gcloud run deploy "$SERVICE_NAME" \
 if [ $? -ne 0 ]; then 
     echo -e "  ${RED}❌ DEPLOYMENT FAILED. CHECK LOGS BELOW:${RESET}"
     tail -n 15 deploy.log
-    rm -f build.log deploy.log
+    rm -f deploy.log
     exit 1
 fi
 
@@ -200,30 +175,19 @@ CLEAN_HOST=$(echo "$SERVICE_URL" | sed 's|https://||')
 VMESS_UUID="b831381d-6324-4d53-ad4f-8cda48b30811"
 SS_B64=$(echo -n "aes-256-gcm:virgozki" | base64 -w0)
 
-# ✅ LAHAT NG LINKS – TAMA NA ANG XHTTP + DAGDAG NA ANG gRPC
 VLESS_WS="vless://${VMESS_UUID}@${CLEAN_HOST}:443?encryption=none&type=ws&path=/vless-virgozki&host=${CLEAN_HOST}&security=tls&sni=${CLEAN_HOST}#VLESS-WS"
 VLESS_HU="vless://${VMESS_UUID}@${CLEAN_HOST}:443?encryption=none&type=httpupgrade&path=/vless-virgozki-hu&host=${CLEAN_HOST}&security=tls&sni=${CLEAN_HOST}#VLESS-HU"
-VLESS_XHTTP="vless://${VMESS_UUID}@${CLEAN_HOST}:443?encryption=none&type=xhttp&path=/vless-virgozki-xhttp&host=${CLEAN_HOST}&security=tls&sni=${CLEAN_HOST}&mode=packet-upstream#VLESS-XHTTP"
-VLESS_GRPC="vless://${VMESS_UUID}@${CLEAN_HOST}:443?encryption=none&type=grpc&serviceName=vless-grpc-virgozki&host=${CLEAN_HOST}&security=tls&sni=${CLEAN_HOST}#VLESS-gRPC"
 
 VMESS_WS_JSON='{"v":"2","ps":"VMESS-WS-virgozki","add":"'"${CLEAN_HOST}"'","port":"443","id":"'"${VMESS_UUID}"'","aid":"0","scy":"auto","net":"ws","type":"none","host":"'"${CLEAN_HOST}"'","path":"/vmess-virgozki","tls":"tls","sni":"'"${CLEAN_HOST}"'","fp":"chrome","alpn":"http/1.1"}'
 VMESS_WS_B64=$(echo -n "$VMESS_WS_JSON" | base64 -w0)
 VMESS_HU_JSON='{"v":"2","ps":"VMESS-HU-virgozki","add":"'"${CLEAN_HOST}"'","port":"443","id":"'"${VMESS_UUID}"'","aid":"0","scy":"auto","net":"httpupgrade","type":"none","host":"'"${CLEAN_HOST}"'","path":"/vmess-virgozki-hu","tls":"tls","sni":"'"${CLEAN_HOST}"'","fp":"chrome","alpn":"http/1.1"}'
 VMESS_HU_B64=$(echo -n "$VMESS_HU_JSON" | base64 -w0)
-VMESS_XHTTP_JSON='{"v":"2","ps":"VMESS-XHTTP-virgozki","add":"'"${CLEAN_HOST}"'","port":"443","id":"'"${VMESS_UUID}"'","aid":"0","scy":"auto","net":"xhttp","type":"none","host":"'"${CLEAN_HOST}"'","path":"/vmess-virgozki-xhttp","tls":"tls","sni":"'"${CLEAN_HOST}"'","fp":"chrome","alpn":"http/1.1","xhttpMode":"packet-upstream"}'
-VMESS_XHTTP_B64=$(echo -n "$VMESS_XHTTP_JSON" | base64 -w0)
-VMESS_GRPC_JSON='{"v":"2","ps":"VMESS-gRPC-virgozki","add":"'"${CLEAN_HOST}"'","port":"443","id":"'"${VMESS_UUID}"'","aid":"0","scy":"auto","net":"grpc","type":"none","host":"'"${CLEAN_HOST}"'","serviceName":"vmess-grpc-virgozki","tls":"tls","sni":"'"${CLEAN_HOST}"'","fp":"chrome","alpn":"h2,http/1.1"}'
-VMESS_GRPC_B64=$(echo -n "$VMESS_GRPC_JSON" | base64 -w0)
 
 TROJAN_WS="trojan://virgozki@${CLEAN_HOST}:443?type=ws&path=/virgozki&host=${CLEAN_HOST}&security=tls&sni=${CLEAN_HOST}#TROJAN-WS"
 TROJAN_HU="trojan://virgozki@${CLEAN_HOST}:443?type=httpupgrade&path=/virgozki-hu&host=${CLEAN_HOST}&security=tls&sni=${CLEAN_HOST}#TROJAN-HU"
-TROJAN_XHTTP="trojan://virgozki@${CLEAN_HOST}:443?type=xhttp&path=/virgozki-xhttp&host=${CLEAN_HOST}&security=tls&sni=${CLEAN_HOST}&mode=packet-upstream#TROJAN-XHTTP"
-TROJAN_GRPC="trojan://virgozki@${CLEAN_HOST}:443?type=grpc&serviceName=trojan-grpc-virgozki&host=${CLEAN_HOST}&security=tls&sni=${CLEAN_HOST}#TROJAN-gRPC"
 
 SS_WS="ss://${SS_B64}@${CLEAN_HOST}:443?type=ws&path=/ss-virgozki&host=${CLEAN_HOST}&security=tls&sni=${CLEAN_HOST}#SHADOWSOCKS-WS"
 SS_HU="ss://${SS_B64}@${CLEAN_HOST}:443?type=httpupgrade&path=/ss-virgozki-hu&host=${CLEAN_HOST}&security=tls&sni=${CLEAN_HOST}#SHADOWSOCKS-HU"
-SS_XHTTP="ss://${SS_B64}@${CLEAN_HOST}:443?type=xhttp&path=/ss-virgozki-xhttp&host=${CLEAN_HOST}&security=tls&sni=${CLEAN_HOST}&mode=packet-upstream#SHADOWSOCKS-XHTTP"
-SS_GRPC="ss://${SS_B64}@${CLEAN_HOST}:443?type=grpc&serviceName=ss-grpc-virgozki&host=${CLEAN_HOST}&security=tls&sni=${CLEAN_HOST}#SHADOWSOCKS-gRPC"
 
 echo ""
 echo -e "  ${GREEN}✅ DEPLOYED SUCCESSFULLY • REGION: ${MAGENTA}${REGION}${GREEN}${RESET}"
@@ -236,36 +200,25 @@ echo -e "  ${CYAN}MODE:      ${GREEN}${MODE} (${CPU} vCPU / ${RAM})${RESET}"
 echo ""
 
 echo -e "  ${YELLOW}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}"
-echo -e "  ${CYAN}            ALL PROTOCOLS (WS + HU + XHTTP + gRPC)${RESET}"
+echo -e "  ${CYAN}                    ALL PROTOCOLS & PATHS${RESET}"
 echo -e "  ${YELLOW}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}"
 echo ""
-echo -e "  ${GREEN}✓ VLESS   ${CYAN}WS: /vless-virgozki    ${GREEN}HU: /vless-virgozki-hu    ${CYAN}XHTTP: /vless-virgozki-xhttp    ${GREEN}gRPC: vless-grpc-virgozki${RESET}"
-echo -e "  ${GREEN}✓ VMESS   ${CYAN}WS: /vmess-virgozki    ${GREEN}HU: /vmess-virgozki-hu    ${CYAN}XHTTP: /vmess-virgozki-xhttp    ${GREEN}gRPC: vmess-grpc-virgozki${RESET}"
-echo -e "  ${GREEN}✓ TROJAN  ${CYAN}WS: /virgozki          ${GREEN}HU: /virgozki-hu          ${CYAN}XHTTP: /virgozki-xhttp          ${GREEN}gRPC: trojan-grpc-virgozki${RESET}"
-echo -e "  ${GREEN}✓ SHADOWSOCKS ${CYAN}WS: /ss-virgozki    ${GREEN}HU: /ss-virgozki-hu    ${CYAN}XHTTP: /ss-virgozki-xhttp    ${GREEN}gRPC: ss-grpc-virgozki${RESET}"
+echo -e "  ${GREEN}✓ VLESS   ${CYAN}WS: /vless-virgozki    ${GREEN}HTTPUPGRADE: /vless-virgozki-hu${RESET}"
+echo -e "  ${GREEN}✓ VMESS   ${CYAN}WS: /vmess-virgozki    ${GREEN}HTTPUPGRADE: /vmess-virgozki-hu${RESET}"
+echo -e "  ${GREEN}✓ TROJAN  ${CYAN}WS: /virgozki          ${GREEN}HTTPUPGRADE: /virgozki-hu${RESET}"
+echo -e "  ${GREEN}✓ SHADOWSOCKS ${CYAN}WS: /ss-virgozki    ${GREEN}HTTPUPGRADE: /ss-virgozki-hu${RESET}"
 echo ""
-echo -e "  ${CYAN}✓ SNI: ${GREEN}${CLEAN_HOST}${RESET}   ${CYAN}✓ ALPN: ${GREEN}h2,http/1.1${RESET}   ${CYAN}✓ FINGERPRINT: ${GREEN}chrome${RESET}"
+echo -e "  ${CYAN}✓ SNI: ${GREEN}${CLEAN_HOST}${RESET}   ${CYAN}✓ ALPN: ${GREEN}http/1.1${RESET}   ${CYAN}✓ FINGERPRINT: ${GREEN}chrome${RESET}"
 echo ""
 echo -e "  ${YELLOW}🔗 READY-TO-USE LINKS:${RESET}"
-echo -e "  ${CYAN}VLESS WS:     ${GREEN}${VLESS_WS}${RESET}"
-echo -e "  ${CYAN}VLESS HU:     ${GREEN}${VLESS_HU}${RESET}"
-echo -e "  ${CYAN}VLESS XHTTP:  ${GREEN}${VLESS_XHTTP}${RESET}"
-echo -e "  ${CYAN}VLESS gRPC:   ${GREEN}${VLESS_GRPC}${RESET}"
-echo -e "  ${CYAN}TROJAN WS:    ${GREEN}${TROJAN_WS}${RESET}"
-echo -e "  ${CYAN}TROJAN HU:    ${GREEN}${TROJAN_HU}${RESET}"
-echo -e "  ${CYAN}TROJAN XHTTP: ${GREEN}${TROJAN_XHTTP}${RESET}"
-echo -e "  ${CYAN}TROJAN gRPC:  ${GREEN}${TROJAN_GRPC}${RESET}"
-echo -e "  ${CYAN}VMESS WS:     ${GREEN}vmess://${VMESS_WS_B64}${RESET}"
-echo -e "  ${CYAN}VMESS HU:     ${GREEN}vmess://${VMESS_HU_B64}${RESET}"
-echo -e "  ${CYAN}VMESS XHTTP:  ${GREEN}vmess://${VMESS_XHTTP_B64}${RESET}"
-echo -e "  ${CYAN}VMESS gRPC:   ${GREEN}vmess://${VMESS_GRPC_B64}${RESET}"
-echo -e "  ${CYAN}SHADOWSOCKS WS:     ${GREEN}${SS_WS}${RESET}"
-echo -e "  ${CYAN}SHADOWSOCKS HU:     ${GREEN}${SS_HU}${RESET}"
-echo -e "  ${CYAN}SHADOWSOCKS XHTTP:  ${GREEN}${SS_XHTTP}${RESET}"
-echo -e "  ${CYAN}SHADOWSOCKS gRPC:   ${GREEN}${SS_GRPC}${RESET}"
+echo -e "  ${CYAN}VLESS WS: ${GREEN}${VLESS_WS}${RESET}"
+echo -e "  ${CYAN}VLESS HU: ${GREEN}${VLESS_HU}${RESET}"
+echo -e "  ${CYAN}TROJAN WS: ${GREEN}${TROJAN_WS}${RESET}"
+echo -e "  ${CYAN}TROJAN HU: ${GREEN}${TROJAN_HU}${RESET}"
+echo -e "  ${CYAN}VMESS WS: ${GREEN}vmess://${VMESS_WS_B64}${RESET}"
+echo -e "  ${CYAN}VMESS HU: ${GREEN}vmess://${VMESS_HU_B64}${RESET}"
 echo -e "  ${YELLOW}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}"
 
-# ✅ GITHUB SYNC – WALANG PINAGBAGO
 if [ -n "$GH_TOKEN" ]; then
     GH_USER="rafaeltv"
     GH_REPO="rafaeltv-gcp-panel"
@@ -295,6 +248,5 @@ if [ -n "$GH_TOKEN" ]; then
     fi
 fi
 
-# ✅ CLEANUP
-rm -f build.log deploy.log
-echo -e "\n  ${GREEN}✅ SCRIPT FINISHED • ALL PROTOCOLS ADDED • NO CHANGES TO OLD SETUP${RESET}"
+rm -f deploy.log
+echo -e "\n  ${GREEN}✅ SCRIPT FINISHED • ENVOY ACTIVE • DEPLOYED SUCCESSFULLY${RESET}"

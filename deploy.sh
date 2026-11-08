@@ -35,10 +35,12 @@ if [ -z "$PROJECT_ID" ]; then
 fi
 echo -e "  ${CYAN}PROJECT: ${GREEN}${PROJECT_ID}${RESET}"
 
-echo -ne "  ${CYAN}DETECTING QWIKLABS REGION... ${RESET}"
+echo -ne "  ${CYAN}AUTO-DETECTING REGION... ${RESET}"
 REGION=$(gcloud config get-value compute/region 2>/dev/null | tr -d '[:space:]')
 [ -z "$REGION" ] && REGION=$(gcloud config get-value run/region 2>/dev/null | tr -d '[:space:]')
-[ -z "$REGION" ] && REGION=$(gcloud run regions list --format="value(REGION)" --limit=1 2>/dev/null | tr -d '[:space:]')
+if [ -z "$REGION" ] || [ "$REGION" = "(unset)" ]; then
+    REGION=$(gcloud run regions list --format="value(REGION)" --limit=1 2>/dev/null | tr -d '[:space:]')
+fi
 [ -z "$REGION" ] && REGION="us-central1"
 echo -e "${GREEN}${REGION}${RESET}"
 echo ""

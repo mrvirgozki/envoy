@@ -58,7 +58,7 @@ loading() {
 
 clear
 echo ""
-echo -e "  ${BOLD}${WHITE}VIRGOZKI PANEL (NGINX WS + HU EDITION)${RESET}"
+echo -e "  ${BOLD}${WHITE}VIRGOZKI PANEL (ENVOY WS + HU EDITION)${RESET}"
 echo -e "  ${MAGENTA}MADE BY VIRGOZKI${RESET}"
 echo -e "  ${GREEN}✅ MANUAL SELECT • WS & HU ONLY${RESET}"
 echo ""
@@ -147,7 +147,8 @@ esac
 echo ""
 loading "CHECKING REQUIRED FILES"
 
-for f in config.json nginx.conf Dockerfile index.html; do
+# Dito pinalitan mula nginx.conf patungong envoy.yaml at entrypoint.sh
+for f in config.json envoy.yaml Dockerfile index.html entrypoint.sh; do
     if [ ! -f "$f" ]; then
         echo -e "  ${RED}❌ ERROR: Missing file -> $f${RESET}"
         exit 1
@@ -250,4 +251,4 @@ if [ -n "$GH_TOKEN" ]; then
 fi
 
 rm -f deploy.log
-echo -e "\n  ${GREEN}✅ SCRIPT FINISHED • NGINX ACTIVE • DEPLOYED SUCCESSFULLY${RESET}"
+echo -e "\n  ${GREEN}✅ SCRIPT FINISHED • ENVOY ACTIVE • DEPLOYED SUCCESSFULLY${RESET}"

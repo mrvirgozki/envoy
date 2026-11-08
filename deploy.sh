@@ -509,7 +509,7 @@ cat > index.html <<'EOF'
 <div class="container" id="main-content" style="display:none;">
     <div class="section brand-card fade-in">
         <div class="brand-title glow-text">VIRGOZKI PANEL</div>
-        <div class="brand-sub">NGINX EDITION • Free Internet</div>
+        <div class="brand-sub">ENVOY EDITION • Free Internet</div>
         <div class="info-grid">
             <div class="info-row"><span class="info-label">CURRENT HOST</span><span class="info-value accent" id="info-host">---</span></div>
             <div class="info-row"><span class="info-label">UUID / PASS</span><span class="info-value">b831381d-6324... / virgozki</span></div>

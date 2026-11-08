@@ -1,0 +1,135 @@
+admin:
+  address:
+    socket_address:
+      address: 127.0.0.1
+      port_value: 9901
+static_resources:
+  listeners:
+  - name: listener_0
+    address:
+      socket_address:
+        address: 0.0.0.0
+        port_value: 8080
+    filter_chains:
+    - filters:
+      - name: envoy.filters.network.http_connection_manager
+        typed_config:
+          "@type": type.googleapis.com/envoy.extensions.filters.network.http_connection_manager.v3.HttpConnectionManager
+          stat_prefix: ingress_http
+          route_config:
+            name: local_route
+            virtual_hosts:
+            - name: backend
+              domains: ["*"]
+              routes:
+              - match: { prefix: "/virgozki" }
+                route: { cluster: xray_trojan_ws }
+              - match: { prefix: "/virgozki-hu" }
+                route: { cluster: xray_trojan_hu }
+              - match: { prefix: "/vmess-virgozki" }
+                route: { cluster: xray_vmess_ws }
+              - match: { prefix: "/vmess-virgozki-hu" }
+                route: { cluster: xray_vmess_hu }
+              - match: { prefix: "/vless-virgozki" }
+                route: { cluster: xray_vless_ws }
+              - match: { prefix: "/vless-virgozki-hu" }
+                route: { cluster: xray_vless_hu }
+              - match: { prefix: "/ss-virgozki" }
+                route: { cluster: xray_ss_ws }
+              - match: { prefix: "/ss-virgozki-hu" }
+                route: { cluster: xray_ss_hu }
+              - match: { prefix: "/" }
+                route: { direct_response: { status: 200, body: { filename: "/usr/local/envoy/html/index.html" } } }
+          http_filters:
+          - name: envoy.filters.http.router
+            typed_config:
+              "@type": type.googleapis.com/envoy.extensions.filters.http.router.v3.Router
+  clusters:
+  - name: xray_trojan_ws
+    connect_timeout: 0.25s
+    type: STRICT_DNS
+    lb_policy: ROUND_ROBIN
+    load_assignment:
+      cluster_name: xray_trojan_ws
+      endpoints:
+      - lb_endpoints:
+        - endpoint:
+            address:
+              socket_address: { address: 127.0.0.1, port_value: 10000 }
+  - name: xray_trojan_hu
+    connect_timeout: 0.25s
+    type: STRICT_DNS
+    lb_policy: ROUND_ROBIN
+    load_assignment:
+      cluster_name: xray_trojan_hu
+      endpoints:
+      - lb_endpoints:
+        - endpoint:
+            address:
+              socket_address: { address: 127.0.0.1, port_value: 10001 }
+  - name: xray_vmess_ws
+    connect_timeout: 0.25s
+    type: STRICT_DNS
+    lb_policy: ROUND_ROBIN
+    load_assignment:
+      cluster_name: xray_vmess_ws
+      endpoints:
+      - lb_endpoints:
+        - endpoint:
+            address:
+              socket_address: { address: 127.0.0.1, port_value: 10003 }
+  - name: xray_vmess_hu
+    connect_timeout: 0.25s
+    type: STRICT_DNS
+    lb_policy: ROUND_ROBIN
+    load_assignment:
+      cluster_name: xray_vmess_hu
+      endpoints:
+      - lb_endpoints:
+        - endpoint:
+            address:
+              socket_address: { address: 127.0.0.1, port_value: 10004 }
+  - name: xray_vless_ws
+    connect_timeout: 0.25s
+    type: STRICT_DNS
+    lb_policy: ROUND_ROBIN
+    load_assignment:
+      cluster_name: xray_vless_ws
+      endpoints:
+      - lb_endpoints:
+        - endpoint:
+            address:
+              socket_address: { address: 127.0.0.1, port_value: 10006 }
+  - name: xray_vless_hu
+    connect_timeout: 0.25s
+    type: STRICT_DNS
+    lb_policy: ROUND_ROBIN
+    load_assignment:
+      cluster_name: xray_vless_hu
+      endpoints:
+      - lb_endpoints:
+        - endpoint:
+            address:
+              socket_address: { address: 127.0.0.1, port_value: 10007 }
+  - name: xray_ss_ws
+    connect_timeout: 0.25s
+    type: STRICT_DNS
+    lb_policy: ROUND_ROBIN
+    load_assignment:
+      cluster_name: xray_ss_ws
+      endpoints:
+      - lb_endpoints:
+        - endpoint:
+            address:
+              socket_address: { address: 127.0.0.1, port_value: 10009 }
+  - name: xray_ss_hu
+    connect_timeout: 0.25s
+    type: STRICT_DNS
+    lb_policy: ROUND_ROBIN
+    load_assignment:
+      cluster_name: xray_ss_hu
+      endpoints:
+      - lb_endpoints:
+        - endpoint:
+            address:
+              socket_address: { address: 127.0.0.1, port_value: 10010 }

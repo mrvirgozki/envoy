@@ -20,4 +20,5 @@ ENV XRAY_LOCATION_ASSET=/usr/local/share/xray/
 EXPOSE 8080
 
 RUN chmod +x /entrypoint.sh
+
 ENTRYPOINT ["/usr/bin/tini", "--", "/entrypoint.sh"]

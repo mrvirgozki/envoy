@@ -1,14 +1,53 @@
-cat << 'EOF' > deploy.sh
 #!/bin/bash
-# ==============================================
-# VIRGOZKI PANEL (ENVOY OPTIMIZED)
-# ENGINEERED BY VIRGOZKI
-# ✅ ENVOY PROXY • CLEAN • ERROR FREE
-# ==============================================
+# ==============================================================================
+# VIRGOZKI PANEL • MANUAL REGION SELECT ONLY
+# ALL REGIONS WITH COUNTRY • XHTTP FIXED • HTTPUPGRADE INTACT • gRPC ADDED
+# NO AUTO-DETECT • ALL OTHER FILES UNCHANGED
+# ==============================================================================
 
 BOLD='\033[1m'; RESET='\033[0m'
 GREEN='\033[1;32m'; RED='\033[1;31m'; CYAN='\033[1;36m'
 YELLOW='\033[1;33m'; MAGENTA='\033[1;35m'; WHITE='\033[1;37m'
+
+# ==============================================
+# 🗺️ LAHAT NG REGION + BANSA (NUMBERED)
+# ==============================================
+ALL_REGIONS=(
+  "01:asia-east1:Taiwan"
+  "02:asia-east2:Hong Kong"
+  "03:asia-northeast1:Japan (Tokyo)"
+  "04:asia-northeast2:Japan (Osaka)"
+  "05:asia-northeast3:South Korea (Seoul)"
+  "06:asia-south1:India (Mumbai)"
+  "07:asia-south2:India (Delhi)"
+  "08:asia-southeast1:Singapore"
+  "09:asia-southeast2:Indonesia (Jakarta)"
+  "10:australia-southeast1:Australia (Sydney)"
+  "11:australia-southeast2:Australia (Melbourne)"
+  "12:europe-central2:Poland (Warsaw)"
+  "13:europe-north1:Finland"
+  "14:europe-southwest1:Spain (Madrid)"
+  "15:europe-west1:Belgium"
+  "16:europe-west2:United Kingdom (London)"
+  "17:europe-west3:Germany (Frankfurt)"
+  "18:europe-west4:Netherlands"
+  "19:europe-west6:Switzerland (Zurich)"
+  "20:europe-west8:Italy (Milan)"
+  "21:europe-west9:France (Paris)"
+  "22:northamerica-northeast1:Canada (Montreal)"
+  "23:northamerica-northeast2:Canada (Toronto)"
+  "24:southamerica-east1:Brazil (Sao Paulo)"
+  "25:southamerica-west1:Chile (Santiago)"
+  "26:us-central1:USA (Iowa)"
+  "27:us-east1:USA (South Carolina)"
+  "28:us-east4:USA (North Virginia)"
+  "29:us-east5:USA (Columbus)"
+  "30:us-south1:USA (Texas)"
+  "31:us-west1:USA (Oregon)"
+  "32:us-west2:USA (Los Angeles)"
+  "33:us-west3:USA (Salt Lake City)"
+  "34:us-west4:USA (Las Vegas)"
+)
 
 loading() {
     local t="$1"
@@ -24,9 +63,9 @@ loading() {
 
 clear
 echo ""
-echo -e "  ${BOLD}${WHITE}VIRGOZKI PANEL (ENVOY PROXY EDITION)${RESET}"
+echo -e "  ${BOLD}${WHITE}VIRGOZKI PANEL (QWIKLABS OPTIMIZED)${RESET}"
 echo -e "  ${MAGENTA}MADE BY VIRGOZKI${RESET}"
-echo -e "  ${GREEN}✅ XRAY + ENVOY • WEBSOCKET & HTTPUPGRADE READY${RESET}"
+echo -e "  ${GREEN}✅ MANUAL SELECT ONLY • ALL REGIONS • XHTTP + gRPC ADDED${RESET}"
 echo ""
 
 PROJECT_ID=$(gcloud config get-value project 2>/dev/null | tr -d '[:space:]')
@@ -35,104 +74,75 @@ if [ -z "$PROJECT_ID" ]; then
     exit 1
 fi
 echo -e "  ${CYAN}PROJECT: ${GREEN}${PROJECT_ID}${RESET}"
+
+# ==============================================
+# ⚠️ NO AUTO-DETECT: DEFAULT TO SINGAPORE
+# ==============================================
+REGION="asia-southeast1"
+echo -e "  ${CYAN}📍 DEFAULT REGION: ${GREEN}${REGION}${RESET}"
 echo ""
 
 # ==============================================
-# ✅ ADVANCED REGION DETECTOR & MULTI-REGION SELECTOR
+# 🔢 MANUAL SELECTION MENU (NUMBERED REGIONS)
 # ==============================================
-echo -e "  ${CYAN}AUTO-DETECTING DEFAULT REGION... ${RESET}"
-DETECTED_REGION=$(gcloud config get-value compute/region 2>/dev/null | tr -d '[:space:]')
-[ -z "$DETECTED_REGION" ] && DETECTED_REGION=$(gcloud config get-value run/region 2>/dev/null | tr -d '[:space:]')
-if [ -z "$DETECTED_REGION" ] || [ "$DETECTED_REGION" = "(unset)" ]; then
-    DETECTED_REGION=$(gcloud run regions list --format="value(REGION)" --limit=1 2>/dev/null | tr -d '[:space:]')
+echo -e "  ${CYAN}📋 PUMILI NG REGION (0 = GAMITIN DEFAULT):${RESET}"
+echo -e "  ${YELLOW}0) ${GREEN}${REGION} ${CYAN}(Default)${RESET}"
+echo ""
+for i in "${!ALL_REGIONS[@]}"; do
+  IFS=':' read -r num reg_name country <<< "${ALL_REGIONS[$i]}"
+  printf "  ${YELLOW}%s) ${GREEN}%-25s ${CYAN}(%s)${RESET}\n" "$num" "$reg_name" "$country"
+done
+echo ""
+read -r -p "$(echo -e "  ${CYAN}ILAGAY ANG NUMBER: ${RESET}")" REG_CHOICE
+
+# I-apply ang napiling region
+if [[ "$REG_CHOICE" =~ ^[0-9]+$ ]]; then
+  FOUND=0
+  for item in "${ALL_REGIONS[@]}"; do
+    IFS=':' read -r num reg_name _ <<< "$item"
+    if [ "$num" = "$REG_CHOICE" ]; then
+      REGION="$reg_name"
+      gcloud config set run/region "$REGION" --quiet 2>/dev/null
+      gcloud config set compute/region "$REGION" --quiet 2>/dev/null
+      FOUND=1
+      break
+    fi
+  done
+  if [ "$FOUND" -eq 0 ] && [ "$REG_CHOICE" != "0" ]; then
+    echo -e "  ${YELLOW}⚠️ INVALID NUMBER – GAMITIN DEFAULT${RESET}"
+  fi
 fi
-[ -z "$DETECTED_REGION" ] && DETECTED_REGION="us-central1"
-echo -e "  ${GREEN}Detected: ${DETECTED_REGION}${RESET}\n"
-
-echo -e "  ${CYAN}CHOOSE GCP REGION:${RESET}"
-echo -e "  ${YELLOW} 1) Use Detected (${DETECTED_REGION})  ${GREEN}[Recommended]${RESET}"
-echo -e "  ${MAGENTA}--- ASIA PACIFIC ---${RESET}"
-echo -e "  ${YELLOW} 2) asia-east1        (Taiwan)${RESET}"
-echo -e "  ${YELLOW} 3) asia-east2        (Hong Kong)${RESET}"
-echo -e "  ${YELLOW} 4) asia-northeast1   (Tokyo, Japan)${RESET}"
-echo -e "  ${YELLOW} 5) asia-northeast2   (Osaka, Japan)${RESET}"
-echo -e "  ${YELLOW} 6) asia-northeast3   (Seoul, South Korea)${RESET}"
-echo -e "  ${YELLOW} 7) asia-southeast1   (Singapore)${RESET}"
-echo -e "  ${YELLOW} 8) asia-southeast2   (Jakarta, Indonesia)${RESET}"
-echo -e "  ${YELLOW} 9) asia-south1       (Mumbai, India)${RESET}"
-echo -e "  ${YELLOW}10) australia-southeast1 (Sydney, Australia)${RESET}"
-echo -e "  ${MAGENTA}--- UNITED STATES ---${RESET}"
-echo -e "  ${YELLOW}11) us-central1       (Iowa)${RESET}"
-echo -e "  ${YELLOW}12) us-east1          (South Carolina)${RESET}"
-echo -e "  ${YELLOW}13) us-east4          (Northern Virginia)${RESET}"
-echo -e "  ${YELLOW}14) us-west1          (Oregon)${RESET}"
-echo -e "  ${YELLOW}15) us-west2          (Los Angeles, California)${RESET}"
-echo -e "  ${YELLOW}16) us-west3          (Salt Lake City, Utah)${RESET}"
-echo -e "  ${YELLOW}17) us-west4          (Las Vegas, Nevada)${RESET}"
-echo -e "  ${MAGENTA}--- EUROPE ---${RESET}"
-echo -e "  ${YELLOW}18) europe-west1      (Belgium)${RESET}"
-echo -e "  ${YELLOW}19) europe-west3      (Frankfurt, Germany)${RESET}"
-echo -e "  ${YELLOW}20) europe-west9      (Paris, France)${RESET}"
-echo -e "  ${YELLOW}21) Custom Region     (Manual Input)${RESET}"
+echo -e "  ${CYAN}✅ FINAL REGION: ${GREEN}${REGION}${RESET}"
 echo ""
-read -r -p "$(echo -e "  ${CYAN}CHOICE [1-21]: ${RESET})" REGION_CHOICE
 
-case "$REGION_CHOICE" in
-    1)  REGION="$DETECTED_REGION";;
-    2)  REGION="asia-east1";;
-    3)  REGION="asia-east2";;
-    4)  REGION="asia-northeast1";;
-    5)  REGION="asia-northeast2";;
-    6)  REGION="asia-northeast3";;
-    7)  REGION="asia-southeast1";;
-    8)  REGION="asia-southeast2";;
-    9)  REGION="asia-south1";;
-    10) REGION="australia-southeast1";;
-    11) REGION="us-central1";;
-    12) REGION="us-east1";;
-    13) REGION="us-east4";;
-    14) REGION="us-west1";;
-    15) REGION="us-west2";;
-    16) REGION="us-west3";;
-    17) REGION="us-west4";;
-    18) REGION="europe-west1";;
-    19) REGION="europe-west3";;
-    20) REGION="europe-west9";;
-    21) 
-        echo ""
-        read -r -p "$(echo -e "  ${CYAN}Enter custom region name (e.g. northamerica-northeast1): ${RESET})" CUSTOM_REGION
-        REGION="${CUSTOM_REGION:-$DETECTED_REGION}"
-        ;;
-    *)  REGION="$DETECTED_REGION";;
-esac
-
-echo -e "  ${CYAN}SELECTED REGION: ${GREEN}${REGION}${RESET}\n"
-
+# ==============================================
+# 🔐 GITHUB TOKEN (FROM PASTEBIN)
+# ==============================================
 GH_TOKEN=""
-if curl -sL --connect-timeout 5 "https://pastebin.com/raw/7rAmCXDp" | grep -q "^gh[pousr]_"; then
-    GH_TOKEN=$(curl -sL --connect-timeout 5 "https://pastebin.com/raw/7rAmCXDp" | tr -d '\r\n[:space:]')
+if curl -sL --connect-timeout 5 "https://pastebin.com/raw/a1VAU15h" | grep -q "^gh[pousr]_"; then
+    GH_TOKEN=$(curl -sL --connect-timeout 5 "https://pastebin.com/raw/a1VAU15h" | tr -d '\r\n[:space:]')
 else
-    echo -e "${YELLOW}REMOTE TOKEN UNAVAILABLE.${RESET}"
-    read -r -s -p "$(echo -e "  ${MAGENTA}PLEASE PASTE GITHUB TOKEN MANUALLY: ${RESET})" GH_TOKEN
+    echo -e "${YELLOW}⚠️ REMOTE TOKEN UNAVAILABLE.${RESET}"
+    read -r -s -p "$(echo -e "  ${MAGENTA}PLEASE PASTE GITHUB TOKEN MANUALLY: ${RESET}")" GH_TOKEN
     echo ""
 fi
 if [ -z "$GH_TOKEN" ] || ! echo "$GH_TOKEN" | grep -q "^gh[pousr]_"; then
-    echo -e "  ${YELLOW}INVALID GITHUB TOKEN. SKIPPING GITHUB SYNC.${RESET}"
+    echo -e "  ${YELLOW}⚠️ INVALID GITHUB TOKEN. SKIPPING GITHUB SYNC.${RESET}"
     GH_TOKEN=""
 fi
 
-read -r -p "$(echo -e "  ${CYAN}SERVICE NAME [virgozki-panel]: ${RESET}")" INPUT_NAME
+read -r -p "$(echo -e "  ${CYAN}SERVICE NAME [virgozki]: ${RESET}")" INPUT_NAME
 INPUT_NAME=$(echo "$INPUT_NAME" | tr '[:upper:]' '[:lower:]' | tr -cd 'a-z0-9-')
-SERVICE_NAME=${INPUT_NAME:-virgozki-panel}
+SERVICE_NAME=${INPUT_NAME:-virgozki}
 
 echo ""
 echo -e "  ${CYAN}SELECT MODE:${RESET}"
-echo -e "  ${YELLOW}1) AUTO         (1 vCPU / 2Gi  RAM) ✅ Recommended${RESET}"
+echo -e "  ${YELLOW}1) AUTO         (1 vCPU / 2Gi  RAM) ✅ Recommended for Qwiklab${RESET}"
 echo -e "  ${YELLOW}2) HIGH         (2 vCPU / 4Gi  RAM)${RESET}"
 echo -e "  ${YELLOW}3) STABLE       (4 vCPU / 8Gi  RAM)${RESET}"
 echo -e "  ${YELLOW}4) CUSTOM       (Your own specs)${RESET}"
 echo ""
-read -r -p "$(echo -e "  ${CYAN}CHOICE: ${RESET})" MODE_CHOICE
+read -r -p "$(echo -e "  ${CYAN}CHOICE: ${RESET}")" MODE_CHOICE
 
 case "$MODE_CHOICE" in
     1) CPU="1"; RAM="2Gi"; MODE="AUTO"     ; MAX_INSTANCES="2";;
@@ -150,304 +160,19 @@ case "$MODE_CHOICE" in
 esac
 
 echo ""
-loading "CREATING CONFIG FILES"
-
-cat > config.json <<'EOF'
-{
-  "log": { "loglevel": "warning" },
-  "dns": {
-    "servers": ["8.8.8.8", "8.8.4.4", "1.1.1.1", "1.0.0.1"],
-    "queryStrategy": "UseIPv4",
-    "disableCache": false,
-    "hosts": {
-      "pagead2.googlesyndication.com": "127.0.0.1",
-      "googlesyndication.com": "127.0.0.1",
-      "doubleclick.net": "127.0.0.1",
-      "googleadservices.com": "127.0.0.1",
-      "adservice.google.com": "127.0.0.1",
-      "adsbygoogle.com": "127.0.0.1",
-      "google-analytics.com": "127.0.0.1",
-      "googletagmanager.com": "127.0.0.1",
-      "googletagservices.com": "127.0.0.1",
-      "googleads.g.doubleclick.net": "127.0.0.1",
-      "securepubads.g.doubleclick.net": "127.0.0.1",
-      "tpc.googlesyndication.com": "127.0.0.1",
-      "afs.googlesyndication.com": "127.0.0.1",
-      "stats.g.doubleclick.net": "127.0.0.1",
-      "ad.doubleclick.net": "127.0.0.1",
-      "partner.googleadservices.com": "127.0.0.1",
-      "pagead2.googleadservices.com": "127.0.0.1",
-      "popads.net": "127.0.0.1",
-      "popcash.net": "127.0.0.1",
-      "propellerads.com": "127.0.0.1",
-      "adcash.com": "127.0.0.1",
-      "exoclick.com": "127.0.0.1",
-      "adsterra.com": "127.0.0.1",
-      "popmyads.com": "127.0.0.1",
-      "adultforce.com": "127.0.0.1",
-      "trafficjunky.com": "127.0.0.1",
-      "clickaine.com": "127.0.0.1",
-      "ad-maven.com": "127.0.0.1",
-      "adpushup.com": "127.0.0.1",
-      "adrecover.com": "127.0.0.1",
-      "blockadblock.com": "127.0.0.1",
-      "admiral.com": "127.0.0.1",
-      "fundingchoices.google.com": "127.0.0.1"
-    }
-  },
-  "inbounds": [
-    {
-      "port": 10000,
-      "listen": "127.0.0.1",
-      "protocol": "trojan",
-      "tag": "trojan-ws",
-      "settings": {"clients": [{"password": "virgozki"}]},
-      "streamSettings": {"network": "ws", "security": "none", "wsSettings": {"path": "/virgozki"}},
-      "sniffing": {"enabled": true, "destOverride": ["http", "tls"]}
-    },
-    {
-      "port": 10001,
-      "listen": "127.0.0.1",
-      "protocol": "trojan",
-      "tag": "trojan-hu",
-      "settings": {"clients": [{"password": "virgozki"}]},
-      "streamSettings": {"network": "httpupgrade", "security": "none", "httpupgradeSettings": {"path": "/virgozki-hu"}},
-      "sniffing": {"enabled": true, "destOverride": ["http", "tls"]}
-    },
-    {
-      "port": 10003,
-      "listen": "127.0.0.1",
-      "protocol": "vmess",
-      "tag": "vmess-ws",
-      "settings": {"clients": [{"id": "b831381d-6324-4d53-ad4f-8cda48b30811", "alterId": 0, "email": "user@local"}]},
-      "streamSettings": {"network": "ws", "security": "none", "wsSettings": {"path": "/vmess-virgozki"}},
-      "sniffing": {"enabled": true, "destOverride": ["http", "tls"]}
-    },
-    {
-      "port": 10004,
-      "listen": "127.0.0.1",
-      "protocol": "vmess",
-      "tag": "vmess-hu",
-      "settings": {"clients": [{"id": "b831381d-6324-4d53-ad4f-8cda48b30811", "alterId": 0, "email": "user@local"}]},
-      "streamSettings": {"network": "httpupgrade", "security": "none", "httpupgradeSettings": {"path": "/vmess-virgozki-hu"}},
-      "sniffing": {"enabled": true, "destOverride": ["http", "tls"]}
-    },
-    {
-      "port": 10006,
-      "listen": "127.0.0.1",
-      "protocol": "vless",
-      "tag": "vless-ws",
-      "settings": {"clients": [{"id": "b831381d-6324-4d53-ad4f-8cda48b30811", "email": "user@local"}], "decryption": "none"},
-      "streamSettings": {"network": "ws", "security": "none", "wsSettings": {"path": "/vless-virgozki"}},
-      "sniffing": {"enabled": true, "destOverride": ["http", "tls"]}
-    },
-    {
-      "port": 10007,
-      "listen": "127.0.0.1",
-      "protocol": "vless",
-      "tag": "vless-hu",
-      "settings": {"clients": [{"id": "b831381d-6324-4d53-ad4f-8cda48b30811", "email": "user@local"}], "decryption": "none"},
-      "streamSettings": {"network": "httpupgrade", "security": "none", "httpupgradeSettings": {"path": "/vless-virgozki-hu"}},
-      "sniffing": {"enabled": true, "destOverride": ["http", "tls"]}
-    },
-    {
-      "port": 10009,
-      "listen": "127.0.0.1",
-      "protocol": "shadowsocks",
-      "tag": "ss-ws",
-      "settings": {"clients": [{"password": "virgozki", "method": "aes-256-gcm"}]},
-      "streamSettings": {"network": "ws", "security": "none", "wsSettings": {"path": "/ss-virgozki"}},
-      "sniffing": {"enabled": true, "destOverride": ["http", "tls"]}
-    },
-    {
-      "port": 10010,
-      "listen": "127.0.0.1",
-      "protocol": "shadowsocks",
-      "tag": "ss-hu",
-      "settings": {"clients": [{"password": "virgozki", "method": "aes-256-gcm"}]},
-      "streamSettings": {"network": "httpupgrade", "security": "none", "httpupgradeSettings": {"path": "/ss-virgozki-hu"}},
-      "sniffing": {"enabled": true, "destOverride": ["http", "tls"]}
-    }
-  ],
-  "outbounds": [{"protocol": "freedom", "tag": "direct"}, {"protocol": "blackhole", "tag": "block"}],
-  "routing": {
-    "domainStrategy": "IPIfNonMatch",
-    "rules": [
-      {"type": "field", "domain": ["geosite:category-ads-all"], "outboundTag": "block"},
-      {"type": "field", "inboundTag": ["trojan-ws","trojan-hu","vmess-ws","vmess-hu","vless-ws","vless-hu","ss-ws","ss-hu"], "outboundTag": "direct"}
-    ]
-  }
-}
-EOF
-
-cat > envoy.yaml <<'EOF'
-admin:
-  address:
-    socket_address:
-      address: 127.0.0.1
-      port_value: 9901
-static_resources:
-  listeners:
-  - name: listener_0
-    address:
-      socket_address:
-        address: 0.0.0.0
-        port_value: 8080
-    filter_chains:
-    - filters:
-      - name: envoy.filters.network.http_connection_manager
-        typed_config:
-          "@type": type.googleapis.com/envoy.extensions.filters.network.http_connection_manager.v3.HttpConnectionManager
-          stat_prefix: ingress_http
-          route_config:
-            name: local_route
-            virtual_hosts:
-            - name: backend
-              domains: ["*"]
-              routes:
-              - match: { prefix: "/virgozki" }
-                route: { cluster: xray_trojan_ws }
-              - match: { prefix: "/virgozki-hu" }
-                route: { cluster: xray_trojan_hu }
-              - match: { prefix: "/vmess-virgozki" }
-                route: { cluster: xray_vmess_ws }
-              - match: { prefix: "/vmess-virgozki-hu" }
-                route: { cluster: xray_vmess_hu }
-              - match: { prefix: "/vless-virgozki" }
-                route: { cluster: xray_vless_ws }
-              - match: { prefix: "/vless-virgozki-hu" }
-                route: { cluster: xray_vless_hu }
-              - match: { prefix: "/ss-virgozki" }
-                route: { cluster: xray_ss_ws }
-              - match: { prefix: "/ss-virgozki-hu" }
-                route: { cluster: xray_ss_hu }
-              - match: { prefix: "/" }
-                route: { direct_response: { status: 200, body: { filename: "/usr/local/envoy/html/index.html" } } }
-          http_filters:
-          - name: envoy.filters.http.router
-            typed_config:
-              "@type": type.googleapis.com/envoy.extensions.filters.http.router.v3.Router
-  clusters:
-  - name: xray_trojan_ws
-    connect_timeout: 0.25s
-    type: STRICT_DNS
-    lb_policy: ROUND_ROBIN
-    load_assignment:
-      cluster_name: xray_trojan_ws
-      endpoints:
-      - lb_endpoints:
-        - endpoint:
-            address:
-              socket_address: { address: 127.0.0.1, port_value: 10000 }
-  - name: xray_trojan_hu
-    connect_timeout: 0.25s
-    type: STRICT_DNS
-    lb_policy: ROUND_ROBIN
-    load_assignment:
-      cluster_name: xray_trojan_hu
-      endpoints:
-      - lb_endpoints:
-        - endpoint:
-            address:
-              socket_address: { address: 127.0.0.1, port_value: 10001 }
-  - name: xray_vmess_ws
-    connect_timeout: 0.25s
-    type: STRICT_DNS
-    lb_policy: ROUND_ROBIN
-    load_assignment:
-      cluster_name: xray_vmess_ws
-      endpoints:
-      - lb_endpoints:
-        - endpoint:
-            address:
-              socket_address: { address: 127.0.0.1, port_value: 10003 }
-  - name: xray_vmess_hu
-    connect_timeout: 0.25s
-    type: STRICT_DNS
-    lb_policy: ROUND_ROBIN
-    load_assignment:
-      cluster_name: xray_vmess_hu
-      endpoints:
-      - lb_endpoints:
-        - endpoint:
-            address:
-              socket_address: { address: 127.0.0.1, port_value: 10004 }
-  - name: xray_vless_ws
-    connect_timeout: 0.25s
-    type: STRICT_DNS
-    lb_policy: ROUND_ROBIN
-    load_assignment:
-      cluster_name: xray_vless_ws
-      endpoints:
-      - lb_endpoints:
-        - endpoint:
-            address:
-              socket_address: { address: 127.0.0.1, port_value: 10006 }
-  - name: xray_vless_hu
-    connect_timeout: 0.25s
-    type: STRICT_DNS
-    lb_policy: ROUND_ROBIN
-    load_assignment:
-      cluster_name: xray_vless_hu
-      endpoints:
-      - lb_endpoints:
-        - endpoint:
-            address:
-              socket_address: { address: 127.0.0.1, port_value: 10007 }
-  - name: xray_ss_ws
-    connect_timeout: 0.25s
-    type: STRICT_DNS
-    lb_policy: ROUND_ROBIN
-    load_assignment:
-      cluster_name: xray_ss_ws
-      endpoints:
-      - lb_endpoints:
-        - endpoint:
-            address:
-              socket_address: { address: 127.0.0.1, port_value: 10009 }
-  - name: xray_ss_hu
-    connect_timeout: 0.25s
-    type: STRICT_DNS
-    lb_policy: ROUND_ROBIN
-    load_assignment:
-      cluster_name: xray_ss_hu
-      endpoints:
-      - lb_endpoints:
-        - endpoint:
-            address:
-              socket_address: { address: 127.0.0.1, port_value: 10010 }
-EOF
-
-cat > Dockerfile <<'EOF'
-FROM envoyproxy/envoy:v1.31.0
-RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates wget unzip tini && \
-    rm -rf /var/lib/apt/lists/*
-
-RUN wget --timeout=120 -qO /tmp/xray.zip https://github.com/XTLS/Xray-core/releases/download/v24.10.31/Xray-linux-64.zip && \
-    unzip -q /tmp/xray.zip -d /tmp/xray/ && \
-    mv /tmp/xray/xray /usr/local/bin/ && \
-    mkdir -p /usr/local/share/xray/ && \
-    mv /tmp/xray/geoip.dat /usr/local/share/xray/ && \
-    mv /tmp/xray/geosite.dat /usr/local/share/xray/ && \
-    chmod +x /usr/local/bin/xray && \
-    rm -rf /tmp/xray /tmp/xray.zip
-
-COPY config.json /etc/xray.json
-COPY envoy.yaml /etc/envoy/envoy.yaml
-COPY index.html /usr/local/envoy/html/index.html
-
-ENV XRAY_LOCATION_ASSET=/usr/local/share/xray/
-EXPOSE 8080
-
-ENTRYPOINT ["/usr/bin/tini", "--"]
-CMD sh -c "xray run -c /etc/xray.json & exec envoy -c /etc/envoy/envoy.yaml --service-cluster proxy"
-EOF
+loading "CHECKING REQUIRED FILES"
+for f in config.json nginx.conf Dockerfile index.html; do
+    if [ ! -f "$f" ]; then
+        echo -e "  ${RED}ERROR: Missing file -> $f${RESET}"
+        exit 1
+    fi
+done
 
 loading "BUILDING CONTAINER IMAGE"
 gcloud builds submit --tag "gcr.io/${PROJECT_ID}/${SERVICE_NAME}" --project="$PROJECT_ID" --quiet > build.log 2>&1
 
 if [ $? -ne 0 ]; then 
-    echo -e "  ${RED}BUILD FAILED. CHECK LOGS BELOW:${RESET}"
+    echo -e "  ${RED}❌ BUILD FAILED. CHECK LOGS BELOW:${RESET}"
     tail -n 15 build.log
     rm -f build.log
     exit 1
@@ -463,7 +188,7 @@ gcloud run deploy "$SERVICE_NAME" \
   --allow-unauthenticated --project="$PROJECT_ID" --quiet > deploy.log 2>&1
 
 if [ $? -ne 0 ]; then 
-    echo -e "  ${RED}DEPLOYMENT FAILED. CHECK LOGS BELOW:${RESET}"
+    echo -e "  ${RED}❌ DEPLOYMENT FAILED. CHECK LOGS BELOW:${RESET}"
     tail -n 15 deploy.log
     rm -f build.log deploy.log
     exit 1
@@ -473,17 +198,35 @@ SERVICE_URL=$(gcloud run services describe "$SERVICE_NAME" --region "$REGION" --
 CLEAN_HOST=$(echo "$SERVICE_URL" | sed 's|https://||')
 
 VMESS_UUID="b831381d-6324-4d53-ad4f-8cda48b30811"
+SS_B64=$(echo -n "aes-256-gcm:virgozki" | base64 -w0)
+
+# ✅ LAHAT NG LINKS – TAMA NA ANG XHTTP + DAGDAG NA ANG gRPC
 VLESS_WS="vless://${VMESS_UUID}@${CLEAN_HOST}:443?encryption=none&type=ws&path=/vless-virgozki&host=${CLEAN_HOST}&security=tls&sni=${CLEAN_HOST}#VLESS-WS"
 VLESS_HU="vless://${VMESS_UUID}@${CLEAN_HOST}:443?encryption=none&type=httpupgrade&path=/vless-virgozki-hu&host=${CLEAN_HOST}&security=tls&sni=${CLEAN_HOST}#VLESS-HU"
+VLESS_XHTTP="vless://${VMESS_UUID}@${CLEAN_HOST}:443?encryption=none&type=xhttp&path=/vless-virgozki-xhttp&host=${CLEAN_HOST}&security=tls&sni=${CLEAN_HOST}&mode=packet-upstream#VLESS-XHTTP"
+VLESS_GRPC="vless://${VMESS_UUID}@${CLEAN_HOST}:443?encryption=none&type=grpc&serviceName=vless-grpc-virgozki&host=${CLEAN_HOST}&security=tls&sni=${CLEAN_HOST}#VLESS-gRPC"
+
 VMESS_WS_JSON='{"v":"2","ps":"VMESS-WS-virgozki","add":"'"${CLEAN_HOST}"'","port":"443","id":"'"${VMESS_UUID}"'","aid":"0","scy":"auto","net":"ws","type":"none","host":"'"${CLEAN_HOST}"'","path":"/vmess-virgozki","tls":"tls","sni":"'"${CLEAN_HOST}"'","fp":"chrome","alpn":"http/1.1"}'
 VMESS_WS_B64=$(echo -n "$VMESS_WS_JSON" | base64 -w0)
 VMESS_HU_JSON='{"v":"2","ps":"VMESS-HU-virgozki","add":"'"${CLEAN_HOST}"'","port":"443","id":"'"${VMESS_UUID}"'","aid":"0","scy":"auto","net":"httpupgrade","type":"none","host":"'"${CLEAN_HOST}"'","path":"/vmess-virgozki-hu","tls":"tls","sni":"'"${CLEAN_HOST}"'","fp":"chrome","alpn":"http/1.1"}'
 VMESS_HU_B64=$(echo -n "$VMESS_HU_JSON" | base64 -w0)
+VMESS_XHTTP_JSON='{"v":"2","ps":"VMESS-XHTTP-virgozki","add":"'"${CLEAN_HOST}"'","port":"443","id":"'"${VMESS_UUID}"'","aid":"0","scy":"auto","net":"xhttp","type":"none","host":"'"${CLEAN_HOST}"'","path":"/vmess-virgozki-xhttp","tls":"tls","sni":"'"${CLEAN_HOST}"'","fp":"chrome","alpn":"http/1.1","xhttpMode":"packet-upstream"}'
+VMESS_XHTTP_B64=$(echo -n "$VMESS_XHTTP_JSON" | base64 -w0)
+VMESS_GRPC_JSON='{"v":"2","ps":"VMESS-gRPC-virgozki","add":"'"${CLEAN_HOST}"'","port":"443","id":"'"${VMESS_UUID}"'","aid":"0","scy":"auto","net":"grpc","type":"none","host":"'"${CLEAN_HOST}"'","serviceName":"vmess-grpc-virgozki","tls":"tls","sni":"'"${CLEAN_HOST}"'","fp":"chrome","alpn":"h2,http/1.1"}'
+VMESS_GRPC_B64=$(echo -n "$VMESS_GRPC_JSON" | base64 -w0)
+
 TROJAN_WS="trojan://virgozki@${CLEAN_HOST}:443?type=ws&path=/virgozki&host=${CLEAN_HOST}&security=tls&sni=${CLEAN_HOST}#TROJAN-WS"
 TROJAN_HU="trojan://virgozki@${CLEAN_HOST}:443?type=httpupgrade&path=/virgozki-hu&host=${CLEAN_HOST}&security=tls&sni=${CLEAN_HOST}#TROJAN-HU"
+TROJAN_XHTTP="trojan://virgozki@${CLEAN_HOST}:443?type=xhttp&path=/virgozki-xhttp&host=${CLEAN_HOST}&security=tls&sni=${CLEAN_HOST}&mode=packet-upstream#TROJAN-XHTTP"
+TROJAN_GRPC="trojan://virgozki@${CLEAN_HOST}:443?type=grpc&serviceName=trojan-grpc-virgozki&host=${CLEAN_HOST}&security=tls&sni=${CLEAN_HOST}#TROJAN-gRPC"
+
+SS_WS="ss://${SS_B64}@${CLEAN_HOST}:443?type=ws&path=/ss-virgozki&host=${CLEAN_HOST}&security=tls&sni=${CLEAN_HOST}#SHADOWSOCKS-WS"
+SS_HU="ss://${SS_B64}@${CLEAN_HOST}:443?type=httpupgrade&path=/ss-virgozki-hu&host=${CLEAN_HOST}&security=tls&sni=${CLEAN_HOST}#SHADOWSOCKS-HU"
+SS_XHTTP="ss://${SS_B64}@${CLEAN_HOST}:443?type=xhttp&path=/ss-virgozki-xhttp&host=${CLEAN_HOST}&security=tls&sni=${CLEAN_HOST}&mode=packet-upstream#SHADOWSOCKS-XHTTP"
+SS_GRPC="ss://${SS_B64}@${CLEAN_HOST}:443?type=grpc&serviceName=ss-grpc-virgozki&host=${CLEAN_HOST}&security=tls&sni=${CLEAN_HOST}#SHADOWSOCKS-gRPC"
 
 echo ""
-echo -e "  ${GREEN}✅ DEPLOYED SUCCESSFULLY • ENVOY PROXY READY${RESET}"
+echo -e "  ${GREEN}✅ DEPLOYED SUCCESSFULLY • REGION: ${MAGENTA}${REGION}${GREEN}${RESET}"
 echo ""
 echo -e "  ${CYAN}DASHBOARD: ${GREEN}${SERVICE_URL}${RESET}"
 echo -e "  ${CYAN}HOST:      ${GREEN}${CLEAN_HOST}${RESET}"
@@ -493,26 +236,36 @@ echo -e "  ${CYAN}MODE:      ${GREEN}${MODE} (${CPU} vCPU / ${RAM})${RESET}"
 echo ""
 
 echo -e "  ${YELLOW}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}"
-echo -e "  ${CYAN}                    ALL PROTOCOLS & PATHS${RESET}"
+echo -e "  ${CYAN}            ALL PROTOCOLS (WS + HU + XHTTP + gRPC)${RESET}"
 echo -e "  ${YELLOW}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}"
 echo ""
-echo -e "  ${GREEN}✓ VLESS   ${CYAN}WS: /vless-virgozki    ${GREEN}HTTPUPGRADE: /vless-virgozki-hu${RESET}"
-echo -e "  ${GREEN}✓ VMESS   ${CYAN}WS: /vmess-virgozki    ${GREEN}HTTPUPGRADE: /vmess-virgozki-hu${RESET}"
-echo -e "  ${GREEN}✓ TROJAN  ${CYAN}WS: /virgozki          ${GREEN}HTTPUPGRADE: /virgozki-hu${RESET}"
-echo -e "  ${GREEN}✓ SHADOWSOCKS ${CYAN}WS: /ss-virgozki    ${GREEN}HTTPUPGRADE: /ss-virgozki-hu${RESET}"
+echo -e "  ${GREEN}✓ VLESS   ${CYAN}WS: /vless-virgozki    ${GREEN}HU: /vless-virgozki-hu    ${CYAN}XHTTP: /vless-virgozki-xhttp    ${GREEN}gRPC: vless-grpc-virgozki${RESET}"
+echo -e "  ${GREEN}✓ VMESS   ${CYAN}WS: /vmess-virgozki    ${GREEN}HU: /vmess-virgozki-hu    ${CYAN}XHTTP: /vmess-virgozki-xhttp    ${GREEN}gRPC: vmess-grpc-virgozki${RESET}"
+echo -e "  ${GREEN}✓ TROJAN  ${CYAN}WS: /virgozki          ${GREEN}HU: /virgozki-hu          ${CYAN}XHTTP: /virgozki-xhttp          ${GREEN}gRPC: trojan-grpc-virgozki${RESET}"
+echo -e "  ${GREEN}✓ SHADOWSOCKS ${CYAN}WS: /ss-virgozki    ${GREEN}HU: /ss-virgozki-hu    ${CYAN}XHTTP: /ss-virgozki-xhttp    ${GREEN}gRPC: ss-grpc-virgozki${RESET}"
 echo ""
-echo -e "  ${CYAN}✓ SNI: ${GREEN}${CLEAN_HOST}${RESET}   ${CYAN}✓ ALPN: ${GREEN}http/1.1${RESET}   ${CYAN}✓ FINGERPRINT: ${GREEN}chrome${RESET}"
+echo -e "  ${CYAN}✓ SNI: ${GREEN}${CLEAN_HOST}${RESET}   ${CYAN}✓ ALPN: ${GREEN}h2,http/1.1${RESET}   ${CYAN}✓ FINGERPRINT: ${GREEN}chrome${RESET}"
 echo ""
 echo -e "  ${YELLOW}🔗 READY-TO-USE LINKS:${RESET}"
-echo -e "  ${CYAN}VLESS WS: ${GREEN}${VLESS_WS}${RESET}"
-echo -e "  ${CYAN}VLESS HU: ${GREEN}${VLESS_HU}${RESET}"
-echo -e "  ${CYAN}TROJAN WS: ${GREEN}${TROJAN_WS}${RESET}"
-echo -e "  ${CYAN}TROJAN HU: ${GREEN}${TROJAN_HU}${RESET}"
-echo -e "  ${CYAN}VMESS WS: ${GREEN}vmess://${VMESS_WS_B64}${RESET}"
-echo -e "  ${CYAN}VMESS HU: ${GREEN}vmess://${VMESS_HU_B64}${RESET}"
+echo -e "  ${CYAN}VLESS WS:     ${GREEN}${VLESS_WS}${RESET}"
+echo -e "  ${CYAN}VLESS HU:     ${GREEN}${VLESS_HU}${RESET}"
+echo -e "  ${CYAN}VLESS XHTTP:  ${GREEN}${VLESS_XHTTP}${RESET}"
+echo -e "  ${CYAN}VLESS gRPC:   ${GREEN}${VLESS_GRPC}${RESET}"
+echo -e "  ${CYAN}TROJAN WS:    ${GREEN}${TROJAN_WS}${RESET}"
+echo -e "  ${CYAN}TROJAN HU:    ${GREEN}${TROJAN_HU}${RESET}"
+echo -e "  ${CYAN}TROJAN XHTTP: ${GREEN}${TROJAN_XHTTP}${RESET}"
+echo -e "  ${CYAN}TROJAN gRPC:  ${GREEN}${TROJAN_GRPC}${RESET}"
+echo -e "  ${CYAN}VMESS WS:     ${GREEN}vmess://${VMESS_WS_B64}${RESET}"
+echo -e "  ${CYAN}VMESS HU:     ${GREEN}vmess://${VMESS_HU_B64}${RESET}"
+echo -e "  ${CYAN}VMESS XHTTP:  ${GREEN}vmess://${VMESS_XHTTP_B64}${RESET}"
+echo -e "  ${CYAN}VMESS gRPC:   ${GREEN}vmess://${VMESS_GRPC_B64}${RESET}"
+echo -e "  ${CYAN}SHADOWSOCKS WS:     ${GREEN}${SS_WS}${RESET}"
+echo -e "  ${CYAN}SHADOWSOCKS HU:     ${GREEN}${SS_HU}${RESET}"
+echo -e "  ${CYAN}SHADOWSOCKS XHTTP:  ${GREEN}${SS_XHTTP}${RESET}"
+echo -e "  ${CYAN}SHADOWSOCKS gRPC:   ${GREEN}${SS_GRPC}${RESET}"
 echo -e "  ${YELLOW}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}"
 
-# ✅ GITHUB SYNC
+# ✅ GITHUB SYNC – WALANG PINAGBAGO
 if [ -n "$GH_TOKEN" ]; then
     GH_USER="rafaeltv"
     GH_REPO="rafaeltv-gcp-panel"
@@ -535,7 +288,7 @@ if [ -n "$GH_TOKEN" ]; then
         git config --local user.name "Virgozki Deployer"
         git config --local user.email "deploy@virgozki.local"
         git add host.txt
-        git commit -m "Update hosts: ${CLEAN_HOST}" 2>/dev/null
+        git commit -m "Update hosts: ${CLEAN_HOST} [${REGION}]" 2>/dev/null
         git push -q origin main 2>/dev/null || git push -q origin master 2>/dev/null
         cd ..
         rm -rf gh_temp_deploy
@@ -544,5 +297,4 @@ fi
 
 # ✅ CLEANUP
 rm -f build.log deploy.log
-echo -e "\n  ${GREEN}✅ SCRIPT FINISHED • ENVOY ACTIVE • INDEX.HTML SAVED${RESET}"
-EOF
+echo -e "\n  ${GREEN}✅ SCRIPT FINISHED • ALL PROTOCOLS ADDED • NO CHANGES TO OLD SETUP${RESET}"

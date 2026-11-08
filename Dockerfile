@@ -14,13 +14,10 @@ RUN wget --timeout=120 -qO /tmp/xray.zip https://github.com/XTLS/Xray-core/relea
 COPY config.json /etc/xray.json
 COPY envoy.yaml /etc/envoy/envoy.yaml
 COPY index.html /usr/local/envoy/html/index.html
+COPY entrypoint.sh /entrypoint.sh
 
 ENV XRAY_LOCATION_ASSET=/usr/local/share/xray/
 EXPOSE 8080
 
-RUN echo '#!/bin/sh' > /entrypoint.sh && \
-    echo 'xray run -c /etc/xray.json &' >> /entrypoint.sh && \
-    echo 'exec envoy -c /etc/envoy/envoy.yaml --service-cluster proxy' >> /entrypoint.sh && \
-    chmod +x /entrypoint.sh
-
+RUN chmod +x /entrypoint.sh
 ENTRYPOINT ["/usr/bin/tini", "--", "/entrypoint.sh"]

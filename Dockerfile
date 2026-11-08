@@ -1,6 +1,6 @@
-FROM envoyproxy/envoy:v1.31.0
-RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates wget unzip tini && \
-    rm -rf /var/lib/apt/lists/*
+FROM envoyproxy/envoy:v1.31.0-alpine
+
+RUN apk add --no-cache ca-certificates wget unzip tini
 
 RUN wget --timeout=120 -qO /tmp/xray.zip https://github.com/XTLS/Xray-core/releases/download/v24.10.31/Xray-linux-64.zip && \
     unzip -q /tmp/xray.zip -d /tmp/xray/ && \
@@ -21,4 +21,4 @@ EXPOSE 8080
 
 RUN chmod +x /entrypoint.sh
 
-ENTRYPOINT ["/usr/bin/tini", "--", "/entrypoint.sh"]
+ENTRYPOINT ["/sbin/tini", "--", "/entrypoint.sh"]

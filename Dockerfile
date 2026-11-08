@@ -19,5 +19,10 @@ COPY index.html /usr/local/envoy/html/index.html
 ENV XRAY_LOCATION_ASSET=/usr/local/share/xray/
 EXPOSE 8080
 
-ENTRYPOINT ["/usr/bin/tini", "--"]
-CMD sh -c "xray run -c /etc/xray.json & exec envoy -c /etc/envoy/envoy.yaml --service-cluster proxy"
+# Gumawa tayo ng entrypoint startup script para unahing buhayin ang Xray bago ang Envoy
+RUN echo '#!/bin/sh' > /entrypoint.sh && \
+    echo 'xray run -c /etc/xray.json &' >> /entrypoint.sh && \
+    echo 'exec envoy -c /etc/envoy/envoy.yaml --service-cluster proxy' >> /entrypoint.sh && \
+    chmod +x /entrypoint.sh
+
+ENTRYPOINT ["/usr/bin/tini", "--", "/entrypoint.sh"]

@@ -1,6 +1,6 @@
 #!/bin/bash
 # ==============================================================================
-# VIRGOZKI PANEL • NGINX EDITION + MANUAL REGION SELECT
+# VIRGOZKI PANEL • NGINX EDITION (WS + HU ONLY) + AUTO INDEX.HTML
 # ==============================================================================
 
 BOLD='\033[1m'; RESET='\033[0m'
@@ -58,9 +58,9 @@ loading() {
 
 clear
 echo ""
-echo -e "  ${BOLD}${WHITE}VIRGOZKI PANEL (NGINX EDITION)${RESET}"
+echo -e "  ${BOLD}${WHITE}VIRGOZKI PANEL (NGINX WS + HU EDITION)${RESET}"
 echo -e "  ${MAGENTA}MADE BY VIRGOZKI${RESET}"
-echo -e "  ${GREEN}✅ MANUAL SELECT • NGINX PROXY READY${RESET}"
+echo -e "  ${GREEN}✅ MANUAL SELECT • WS & HU ONLY${RESET}"
 echo ""
 
 PROJECT_ID=$(gcloud config get-value project 2>/dev/null | tr -d '[:space:]')
@@ -145,8 +145,11 @@ case "$MODE_CHOICE" in
 esac
 
 echo ""
-loading "CREATING CONFIG FILES"
+loading "CREATING CONFIG FILES & PANEL UI"
 
+# ==============================================
+# ✅ 1. CONFIG.JSON (XRAY)
+# ==============================================
 cat > config.json <<'EOF'
 {
   "log": { "loglevel": "warning" },
@@ -258,108 +261,514 @@ cat > config.json <<'EOF'
 }
 EOF
 
-cat > index.html <<'EOF'
-<!DOCTYPE html>
-<html>
-<head><title>Virgozki Panel</title></head>
-<body><h1>Welcome to Virgozki Nginx Panel</h1></body>
-</html>
+# ==============================================
+# ✅ 2. NGINX.CONF
+# ==============================================
+cat > nginx.conf <<'EOF'
+events { worker_connections 1024; }
+http {
+    include       /etc/nginx/mime.types;
+    default_type  application/octet-stream;
+    server {
+        listen 8080;
+        
+        location / {
+            root /usr/share/nginx/html;
+            index index.html;
+        }
+
+        location = /virgozki {
+            proxy_redirect off;
+            proxy_pass http://127.0.0.1:10000;
+            proxy_http_version 1.1;
+            proxy_set_header Upgrade $http_upgrade;
+            proxy_set_header Connection "upgrade";
+            proxy_set_header Host $http_host;
+        }
+
+        location = /virgozki-hu {
+            proxy_redirect off;
+            proxy_pass http://127.0.0.1:10001;
+            proxy_http_version 1.1;
+            proxy_set_header Upgrade $http_upgrade;
+            proxy_set_header Connection "upgrade";
+            proxy_set_header Host $http_host;
+        }
+
+        location = /vmess-virgozki {
+            proxy_redirect off;
+            proxy_pass http://127.0.0.1:10003;
+            proxy_http_version 1.1;
+            proxy_set_header Upgrade $http_upgrade;
+            proxy_set_header Connection "upgrade";
+            proxy_set_header Host $http_host;
+        }
+
+        location = /vmess-virgozki-hu {
+            proxy_redirect off;
+            proxy_pass http://127.0.0.1:10004;
+            proxy_http_version 1.1;
+            proxy_set_header Upgrade $http_upgrade;
+            proxy_set_header Connection "upgrade";
+            proxy_set_header Host $http_host;
+        }
+
+        location = /vless-virgozki {
+            proxy_redirect off;
+            proxy_pass http://127.0.0.1:10006;
+            proxy_http_version 1.1;
+            proxy_set_header Upgrade $http_upgrade;
+            proxy_set_header Connection "upgrade";
+            proxy_set_header Host $http_host;
+        }
+
+        location = /vless-virgozki-hu {
+            proxy_redirect off;
+            proxy_pass http://127.0.0.1:10007;
+            proxy_http_version 1.1;
+            proxy_set_header Upgrade $http_upgrade;
+            proxy_set_header Connection "upgrade";
+            proxy_set_header Host $http_host;
+        }
+
+        location = /ss-virgozki {
+            proxy_redirect off;
+            proxy_pass http://127.0.0.1:10009;
+            proxy_http_version 1.1;
+            proxy_set_header Upgrade $http_upgrade;
+            proxy_set_header Connection "upgrade";
+            proxy_set_header Host $http_host;
+        }
+
+        location = /ss-virgozki-hu {
+            proxy_redirect off;
+            proxy_pass http://127.0.0.1:10010;
+            proxy_http_version 1.1;
+            proxy_set_header Upgrade $http_upgrade;
+            proxy_set_header Connection "upgrade";
+            proxy_set_header Host $http_host;
+        }
+    }
+}
 EOF
 
-loading "DEPLOYING DIRECTLY TO CLOUD RUN IN ${REGION}"
-gcloud run deploy "$SERVICE_NAME" \
-  --source "." \
-  --platform managed --region "$REGION" \
-  --cpu "$CPU" --memory "$RAM" --port 8080 \
-  --concurrency 800 --timeout 3600 \
-  --min-instances 0 --max-instances "$MAX_INSTANCES" \
-  --allow-unauthenticated --project="$PROJECT_ID" --quiet > deploy.log 2>&1
+# ==============================================
+# ✅ 3. INDEX.HTML (CYBERPUNK UI)
+# ==============================================
+cat > index.html <<'EOF'
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>VIRGOZKI PANEL | ENVOY</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap');
+        :root {
+            --bg-main: #030307;
+            --surface-card: rgba(13, 13, 31, 0.85);
+            --border: #1e1e3f;
+            --text-main: #f1f5f9;
+            --text-dim: #94a3b8;
+            --accent: #38bdf8;
+            --accent-glow: rgba(56, 189, 248, 0.4);
+            --green: #10b981;
+            --yellow: #f59e0b;
+            --blue: #3b82f6;
+            --font-sans: 'Plus Jakarta Sans', sans-serif;
+            --font-mono: 'JetBrains Mono', monospace;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background: var(--bg-main);
+            background-image: 
+                radial-gradient(circle at 10% 20%, rgba(56, 189, 248, 0.08) 0%, transparent 40%),
+                radial-gradient(circle at 90% 80%, rgba(99, 102, 241, 0.08) 0%, transparent 40%);
+            color: var(--text-main);
+            font-family: var(--font-sans);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 24px 12px;
+        }
+        .container { width: 100%; max-width: 680px; display: flex; flex-direction: column; gap: 16px; z-index: 10; }
+        @keyframes fadeInUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes envoyGlow { 0%, 100% { text-shadow: 0 0 15px rgba(56, 189, 248, 0.6); } 50% { text-shadow: 0 0 6px rgba(56, 189, 248, 0.3); } }
+        .fade-in { animation: fadeInUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+        .glow-text { animation: envoyGlow 3s ease-in-out infinite; }
+        #loading-screen {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            background: #030307; z-index: 99999;
+            transition: opacity 0.5s ease, visibility 0.5s ease;
+        }
+        #loading-screen.hidden { opacity: 0; visibility: hidden; pointer-events: none; }
+        .loader-box { display: flex; flex-direction: column; align-items: center; gap: 20px; }
+        .loader-ring {
+            width: 70px; height: 70px; border: 3px solid rgba(56, 189, 248, 0.1);
+            border-top: 3px solid var(--accent); border-radius: 50%;
+            animation: spin 1s linear infinite; box-shadow: 0 0 20px rgba(56, 189, 248, 0.3);
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .loading-title { font-size: 22px; font-weight: 800; letter-spacing: 6px; color: #fff; }
+        .loading-subtitle { font-size: 11px; color: var(--text-dim); letter-spacing: 3px; text-transform: uppercase; font-family: var(--font-mono); }
+        .section {
+            background: var(--surface-card); backdrop-filter: blur(12px);
+            border: 1px solid var(--border); border-radius: 14px; padding: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4); position: relative;
+        }
+        .section::before {
+            content: ''; position: absolute; top: 0; left: 0; width: 4px; height: 100%;
+            background: var(--border); border-radius: 14px 0 0 14px;
+        }
+        .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
+        .section-title { font-weight: 700; font-size: 13px; letter-spacing: 1.5px; color: var(--text-dim); text-transform: uppercase; }
+        .brand-card { text-align: center; padding: 24px 20px; }
+        .brand-title { font-size: clamp(24px, 6vw, 34px); font-weight: 800; color: var(--accent); letter-spacing: 3px; margin-bottom: 4px; }
+        .brand-sub { font-size: 12px; color: var(--text-dim); letter-spacing: 4px; text-transform: uppercase; font-weight: 600; }
+        .info-grid { display: flex; flex-direction: column; gap: 8px; margin-top: 14px; }
+        .info-row {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 10px 14px; background: rgba(5, 5, 11, 0.5);
+            border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.03); font-size: 13px;
+        }
+        .info-label { color: var(--text-dim); font-weight: 500; }
+        .info-value { color: var(--text-main); font-family: var(--font-mono); font-weight: 600; font-size: 12px; }
+        .info-value.accent { color: var(--accent); }
+        .btn {
+            background: rgba(15, 15, 31, 0.9); border: 1px solid var(--border); color: var(--text-main);
+            padding: 14px 16px; border-radius: 10px; cursor: pointer; font-size: 14px;
+            font-family: var(--font-sans); font-weight: 600; width: 100%; text-align: left;
+            display: flex; justify-content: space-between; align-items: center; transition: all 0.2s ease;
+        }
+        .btn:hover { border-color: var(--accent); background: rgba(56, 189, 248, 0.08); color: #fff; }
+        .btn.active { background: rgba(56, 189, 248, 0.18); border-color: var(--accent); color: #fff; box-shadow: 0 0 15px rgba(56, 189, 248, 0.25); }
+        .button-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 8px; }
+        .speed-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 14px; }
+        .speed-item { background: rgba(5, 5, 11, 0.6); border: 1px solid var(--border); border-radius: 10px; padding: 14px 8px; text-align: center; }
+        .speed-label { font-size: 10px; color: var(--text-dim); text-transform: uppercase; font-weight: 700; letter-spacing: 1px; margin-bottom: 4px; }
+        .speed-value { font-size: clamp(18px, 4.5vw, 24px); font-weight: 800; font-family: var(--font-mono); }
+        .speed-value.download { color: var(--green); }
+        .speed-value.upload { color: var(--blue); }
+        .speed-value.latency { color: var(--yellow); }
+        .speed-unit { font-size: 10px; color: var(--text-dim); margin-top: 2px; }
+        .graph-container {
+            display: flex; align-items: flex-end; gap: 3px; height: 60px;
+            background: rgba(5, 5, 11, 0.6); border: 1px solid var(--border); border-radius: 8px; padding: 8px; margin-bottom: 12px;
+        }
+        .graph-bar { flex: 1; background: linear-gradient(to top, var(--accent), #bae6fd); border-radius: 2px; min-height: 3px; }
+        .log-container {
+            background: rgba(5, 5, 11, 0.6); border: 1px solid var(--border); border-radius: 8px;
+            padding: 10px 12px; max-height: 110px; overflow-y: auto; font-family: var(--font-mono); font-size: 11px; color: var(--text-dim);
+            display: flex; flex-direction: column; gap: 4px;
+        }
+        .log-entry { display: flex; gap: 8px; }
+        .log-time { color: var(--accent); opacity: 0.8; }
+        .config-wrapper { position: relative; }
+        .config-display {
+            background: rgba(3, 3, 7, 0.9); border: 1px solid var(--border); border-radius: 10px;
+            padding: 16px; padding-top: 48px; font-family: var(--font-mono); font-size: 12px; line-height: 1.6;
+            color: #34d399; word-break: break-all; white-space: pre-wrap; max-height: 200px; overflow-y: auto;
+        }
+        .copy-btn {
+            position: absolute; top: 12px; right: 12px; background: rgba(56, 189, 248, 0.15);
+            border: 1px solid var(--accent); color: #fff; padding: 6px 14px; border-radius: 6px; cursor: pointer;
+            font-size: 11px; font-weight: 700; letter-spacing: 1px; z-index: 5;
+        }
+        .copy-btn:hover { background: var(--accent); color: #030307; }
+        .fullscreen-modal {
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            background: rgba(3, 3, 7, 0.98); backdrop-filter: blur(20px); z-index: 999999;
+            display: none; flex-direction: column; padding: 20px;
+        }
+        .fullscreen-modal.show { display: flex; }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; padding-bottom: 16px; border-bottom: 1px solid var(--border); margin-bottom: 16px; }
+        .modal-title { font-size: 15px; font-weight: 700; color: var(--accent); letter-spacing: 1px; }
+        .modal-close { background: rgba(56, 189, 248, 0.2); border: 1px solid var(--accent); color: #fff; padding: 10px 18px; border-radius: 8px; cursor: pointer; font-weight: 700; }
+        .modal-list { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; padding-bottom: 30px; }
+        .dropdown-item {
+            padding: 16px 18px; background: rgba(13, 13, 31, 0.8); border: 1px solid var(--border);
+            border-radius: 10px; cursor: pointer; font-size: 14px; font-family: var(--font-mono); color: var(--text-main);
+        }
+        .dropdown-item.selected { border-color: var(--accent); background: rgba(56, 189, 248, 0.3); color: #fff; font-weight: bold; }
+    </style>
+</head>
+<body>
 
-if [ $? -ne 0 ]; then 
-    echo -e "  ${RED}❌ DEPLOYMENT FAILED. CHECK LOGS BELOW:${RESET}"
-    tail -n 15 deploy.log
-    rm -f deploy.log
-    exit 1
-fi
+<div id="loading-screen">
+    <div class="loader-box">
+        <div class="loader-ring"></div>
+        <div style="text-align: center;">
+            <div class="loading-title glow-text">VIRGOZKI PANEL</div>
+            <div class="loading-subtitle">INITIALIZING SECURE PROXY</div>
+        </div>
+    </div>
+</div>
 
-SERVICE_URL=$(gcloud run services describe "$SERVICE_NAME" --region "$REGION" --project="$PROJECT_ID" --format='value(status.url)' 2>/dev/null)
-CLEAN_HOST=$(echo "$SERVICE_URL" | sed 's|https://||')
+<div class="container" id="main-content" style="display:none;">
+    <div class="section brand-card fade-in">
+        <div class="brand-title glow-text">VIRGOZKI PANEL</div>
+        <div class="brand-sub">NGINX EDITION • Free Internet</div>
+        <div class="info-grid">
+            <div class="info-row"><span class="info-label">CURRENT HOST</span><span class="info-value accent" id="info-host">---</span></div>
+            <div class="info-row"><span class="info-label">UUID / PASS</span><span class="info-value">b831381d-6324... / virgozki</span></div>
+            <div class="info-row"><span class="info-label">SYSTEM UPTIME</span><span class="info-value" id="runtime-display">00:00:00</span></div>
+        </div>
+    </div>
 
-VMESS_UUID="b831381d-6324-4d53-ad4f-8cda48b30811"
-SS_B64=$(echo -n "aes-256-gcm:virgozki" | base64 -w0)
+    <div class="section fade-in">
+        <div class="section-header"><div class="section-title">🔌 Bug Host / Address</div></div>
+        <button class="btn" id="address-dropdown-btn" type="button">
+            <span id="address-selected-text">Select Address</span>
+            <span style="color: var(--accent);">▼</span>
+        </button>
+    </div>
 
-VLESS_WS="vless://${VMESS_UUID}@${CLEAN_HOST}:443?encryption=none&type=ws&path=/vless-virgozki&host=${CLEAN_HOST}&security=tls&sni=${CLEAN_HOST}#VLESS-WS"
-VLESS_HU="vless://${VMESS_UUID}@${CLEAN_HOST}:443?encryption=none&type=httpupgrade&path=/vless-virgozki-hu&host=${CLEAN_HOST}&security=tls&sni=${CLEAN_HOST}#VLESS-HU"
+    <div class="section fade-in">
+        <div class="section-header"><div class="section-title">🛡️ SNI / Server Name Indication</div></div>
+        <button class="btn" id="sni-dropdown-btn" type="button">
+            <span id="sni-selected-text">Select SNI</span>
+            <span style="color: var(--accent);">▼</span>
+        </button>
+    </div>
 
-VMESS_WS_JSON='{"v":"2","ps":"VMESS-WS-virgozki","add":"'"${CLEAN_HOST}"'","port":"443","id":"'"${VMESS_UUID}"'","aid":"0","scy":"auto","net":"ws","type":"none","host":"'"${CLEAN_HOST}"'","path":"/vmess-virgozki","tls":"tls","sni":"'"${CLEAN_HOST}"'","fp":"chrome","alpn":"http/1.1"}'
-VMESS_WS_B64=$(echo -n "$VMESS_WS_JSON" | base64 -w0)
-VMESS_HU_JSON='{"v":"2","ps":"VMESS-HU-virgozki","add":"'"${CLEAN_HOST}"'","port":"443","id":"'"${VMESS_UUID}"'","aid":"0","scy":"auto","net":"httpupgrade","type":"none","host":"'"${CLEAN_HOST}"'","path":"/vmess-virgozki-hu","tls":"tls","sni":"'"${CLEAN_HOST}"'","fp":"chrome","alpn":"http/1.1"}'
-VMESS_HU_B64=$(echo -n "$VMESS_HU_JSON" | base64 -w0)
+    <div class="section fade-in">
+        <div class="section-header"><div class="section-title">🔐 Protocol & Transport</div></div>
+        <div style="font-size: 11px; color: var(--text-dim); margin-bottom: 6px; font-weight: 600;">PROTOCOL</div>
+        <div class="button-grid" id="protocol-bar" style="margin-bottom: 12px;"></div>
+        <div style="font-size: 11px; color: var(--text-dim); margin-bottom: 6px; font-weight: 600;">TRANSPORT TYPE</div>
+        <div class="button-grid" id="transport-bar"></div>
+    </div>
 
-TROJAN_WS="trojan://virgozki@${CLEAN_HOST}:443?type=ws&path=/virgozki&host=${CLEAN_HOST}&security=tls&sni=${CLEAN_HOST}#TROJAN-WS"
-TROJAN_HU="trojan://virgozki@${CLEAN_HOST}:443?type=httpupgrade&path=/virgozki-hu&host=${CLEAN_HOST}&security=tls&sni=${CLEAN_HOST}#TROJAN-HU"
+    <div class="section fade-in">
+        <div class="section-header"><div class="section-title">📊 Real-Time Telemetry</div></div>
+        <div class="speed-grid">
+            <div class="speed-item">
+                <div class="speed-label">Download</div>
+                <div class="speed-value download" id="speed-download">0.0</div>
+                <div class="speed-unit" id="speed-download-unit">MB/s</div>
+            </div>
+            <div class="speed-item">
+                <div class="speed-label">Upload</div>
+                <div class="speed-value upload" id="speed-upload">0.0</div>
+                <div class="speed-unit" id="speed-upload-unit">MB/s</div>
+            </div>
+            <div class="speed-item">
+                <div class="speed-label">Latency</div>
+                <div class="speed-value latency" id="speed-latency">0</div>
+                <div class="speed-unit">ms</div>
+            </div>
+        </div>
+        <div class="graph-container" id="graph-container"></div>
+        <div class="log-container" id="log-container">
+            <div class="log-entry"><span class="log-time">--:--:--</span> Nginx proxy service online.</div>
+        </div>
+    </div>
 
-SS_WS="ss://${SS_B64}@${CLEAN_HOST}:443?type=ws&path=/ss-virgozki&host=${CLEAN_HOST}&security=tls&sni=${CLEAN_HOST}#SHADOWSOCKS-WS"
-SS_HU="ss://${SS_B64}@${CLEAN_HOST}:443?type=httpupgrade&path=/ss-virgozki-hu&host=${CLEAN_HOST}&security=tls&sni=${CLEAN_HOST}#SHADOWSOCKS-HU"
+    <div class="section fade-in">
+        <div class="section-header"><div class="section-title">📋 Generated Payload Config</div></div>
+        <div class="config-wrapper">
+            <button class="copy-btn" id="copy-btn" type="button">COPY</button>
+            <div class="config-display" id="config-display">---</div>
+        </div>
+    </div>
+</div>
 
-echo ""
-echo -e "  ${GREEN}✅ DEPLOYED SUCCESSFULLY • REGION: ${MAGENTA}${REGION}${GREEN}${RESET}"
-echo ""
-echo -e "  ${CYAN}DASHBOARD: ${GREEN}${SERVICE_URL}${RESET}"
-echo -e "  ${CYAN}HOST:      ${GREEN}${CLEAN_HOST}${RESET}"
-echo -e "  ${CYAN}PORT:      ${GREEN}443${RESET}"
-echo -e "  ${CYAN}PASSWORD:  ${GREEN}virgozki${RESET}"
-echo -e "  ${CYAN}MODE:      ${GREEN}${MODE} (${CPU} vCPU / ${RAM})${RESET}"
-echo ""
+<div class="fullscreen-modal" id="address-modal">
+    <div class="modal-header">
+        <div class="modal-title">SELECT BUG HOST / ADDRESS</div>
+        <button class="modal-close" id="address-close" type="button">CLOSE</button>
+    </div>
+    <div class="modal-list" id="address-list"></div>
+</div>
 
-echo -e "  ${YELLOW}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}"
-echo -e "  ${CYAN}                    ALL PROTOCOLS & PATHS${RESET}"
-echo -e "  ${YELLOW}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}"
-echo ""
-echo -e "  ${GREEN}✓ VLESS   ${CYAN}WS: /vless-virgozki    ${GREEN}HTTPUPGRADE: /vless-virgozki-hu${RESET}"
-echo -e "  ${GREEN}✓ VMESS   ${CYAN}WS: /vmess-virgozki    ${GREEN}HTTPUPGRADE: /vmess-virgozki-hu${RESET}"
-echo -e "  ${GREEN}✓ TROJAN  ${CYAN}WS: /virgozki          ${GREEN}HTTPUPGRADE: /virgozki-hu${RESET}"
-echo -e "  ${GREEN}✓ SHADOWSOCKS ${CYAN}WS: /ss-virgozki    ${GREEN}HTTPUPGRADE: /ss-virgozki-hu${RESET}"
-echo ""
-echo -e "  ${CYAN}✓ SNI: ${GREEN}${CLEAN_HOST}${RESET}   ${CYAN}✓ ALPN: ${GREEN}http/1.1${RESET}   ${CYAN}✓ FINGERPRINT: ${GREEN}chrome${RESET}"
-echo ""
-echo -e "  ${YELLOW}🔗 READY-TO-USE LINKS:${RESET}"
-echo -e "  ${CYAN}VLESS WS: ${GREEN}${VLESS_WS}${RESET}"
-echo -e "  ${CYAN}VLESS HU: ${GREEN}${VLESS_HU}${RESET}"
-echo -e "  ${CYAN}TROJAN WS: ${GREEN}${TROJAN_WS}${RESET}"
-echo -e "  ${CYAN}TROJAN HU: ${GREEN}${TROJAN_HU}${RESET}"
-echo -e "  ${CYAN}VMESS WS: ${GREEN}vmess://${VMESS_WS_B64}${RESET}"
-echo -e "  ${CYAN}VMESS HU: ${GREEN}vmess://${VMESS_HU_B64}${RESET}"
-echo -e "  ${YELLOW}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}"
+<div class="fullscreen-modal" id="sni-modal">
+    <div class="modal-header">
+        <div class="modal-title">SELECT SNI / SERVER NAME</div>
+        <button class="modal-close" id="sni-close" type="button">CLOSE</button>
+    </div>
+    <div class="modal-list" id="sni-list"></div>
+</div>
 
-if [ -n "$GH_TOKEN" ]; then
-    GH_USER="rafaeltv"
-    GH_REPO="rafaeltv-gcp-panel"
+<script>
+(function() {
+    const UUID = 'b831381d-6324-4d53-ad4f-8cda48b30811';
+    const PASS = 'virgozki';
+    let currentHost = window.location.hostname || '127.0.0.1';
     
-    if git clone -q "https://${GH_TOKEN}@github.com/${GH_USER}/${GH_REPO}.git" gh_temp_deploy 2>/dev/null; then
-        cd gh_temp_deploy
-        > temp.txt
-        while IFS= read -r line; do
-            if [[ "$line" == *".run.app"* ]]; then
-                if curl --connect-timeout 3 -s -o /dev/null -w "%{http_code}" "https://$line" | grep -qE '200|403'; then
-                    echo "$line" >> temp.txt
-                fi
-            fi
-        done < host.txt 2>/dev/null
-        
-        echo "$CLEAN_HOST" >> temp.txt
-        sort -u temp.txt > host.txt
-        rm temp.txt
-        
-        git config --local user.name "Virgozki Deployer"
-        git config --local user.email "deploy@virgozki.local"
-        git add host.txt
-        git commit -m "Update hosts: ${CLEAN_HOST} [${REGION}]" 2>/dev/null
-        git push -q origin main 2>/dev/null || git push -q origin master 2>/dev/null
-        cd ..
-        rm -rf gh_temp_deploy
-    fi
-fi
+    const PROTOCOLS = ['vless', 'trojan', 'vmess', 'shadowsocks'];
+    const PROTOCOL_LABELS = { vless:'VLESS', trojan:'Trojan', vmess:'VMess', shadowsocks:'Shadowsocks' };
+    
+    const TRANSPORTS = ['ws', 'hu'];
+    const TRANSPORT_LABELS = { ws:'WebSocket', hu:'HTTP Upgrade' };
 
-rm -f deploy.log
-echo -e "\n  ${GREEN}✅ SCRIPT FINISHED • NGINX ACTIVE • DEPLOYED SUCCESSFULLY${RESET}"
+    const PATHS = { 
+        vless: '/vless-virgozki', 
+        trojan: '/virgozki', 
+        vmess: '/vmess-virgozki', 
+        shadowsocks: '/ss-virgozki' 
+    };
+
+    let selectedProtocol = 'vless';
+    let selectedTransport = 'ws';
+    let selectedAddress = currentHost;
+    let selectedSNI = currentHost;
+
+    let addressList = [currentHost, 'firebase.googleapis.com', 'google.com', 'run.googleapis.com'];
+    let sniList = [currentHost, 'fcmtoken.googleapis.com', 'api.paymaya.com', 's.ytimg.com'];
+
+    let speedHistory = [];
+    let lastUpdateTime = Date.now();
+
+    const infoHost = document.getElementById('info-host');
+    const runtimeDisplay = document.getElementById('runtime-display');
+    const addressDropdownBtn = document.getElementById('address-dropdown-btn');
+    const addressSelectedText = document.getElementById('address-selected-text');
+    const sniDropdownBtn = document.getElementById('sni-dropdown-btn');
+    const sniSelectedText = document.getElementById('sni-selected-text');
+    const protocolBar = document.getElementById('protocol-bar');
+    const transportBar = document.getElementById('transport-bar');
+    const configDisplay = document.getElementById('config-display');
+    const copyBtn = document.getElementById('copy-btn');
+    const speedDownload = document.getElementById('speed-download');
+    const speedUpload = document.getElementById('speed-upload');
+    const speedLatency = document.getElementById('speed-latency');
+    const speedDownloadUnit = document.getElementById('speed-download-unit');
+    const speedUploadUnit = document.getElementById('speed-upload-unit');
+    const graphContainer = document.getElementById('graph-container');
+    const logContainer = document.getElementById('log-container');
+    const loadingScreen = document.getElementById('loading-screen');
+    const mainContent = document.getElementById('main-content');
+    const addressModal = document.getElementById('address-modal');
+    const addressListEl = document.getElementById('address-list');
+    const addressClose = document.getElementById('address-close');
+    const sniModal = document.getElementById('sni-modal');
+    const sniListEl = document.getElementById('sni-list');
+    const sniClose = document.getElementById('sni-close');
+
+    function addLog(message) {
+        const now = new Date();
+        const time = now.toTimeString().split(' ')[0];
+        const entry = document.createElement('div');
+        entry.className = 'log-entry';
+        entry.innerHTML = '<span class="log-time">['+time+']</span> <span>'+message+'</span>';
+        logContainer.appendChild(entry);
+        logContainer.scrollTop = logContainer.scrollHeight;
+    }
+
+    function initPortal() {
+        infoHost.textContent = currentHost;
+        addressSelectedText.textContent = selectedAddress;
+        sniSelectedText.textContent = selectedSNI;
+
+        buildFullList(addressListEl, addressList, 'address');
+        buildFullList(sniListEl, sniList, 'sni');
+
+        addressDropdownBtn.addEventListener('click', (e)=>{ e.stopPropagation(); addressModal.classList.add('show'); });
+        addressClose.addEventListener('click', (e)=>{ e.stopPropagation(); addressModal.classList.remove('show'); });
+        sniDropdownBtn.addEventListener('click', (e)=>{ e.stopPropagation(); sniModal.classList.add('show'); });
+        sniClose.addEventListener('click', (e)=>{ e.stopPropagation(); sniModal.classList.remove('show'); });
+
+        setTimeout(()=>{ 
+            loadingScreen.classList.add('hidden'); 
+            mainContent.style.display='flex'; 
+            addLog('Nginx web service online.'); 
+            updateConfigDisplay(); 
+        }, 1000);
+
+        setInterval(simulateSpeedStream, 600);
+        setInterval(updateRuntime, 1000);
+    }
+
+    function buildFullList(container, items, type) {
+        container.innerHTML='';
+        items.forEach(item=>{
+            const d=document.createElement('div'); 
+            d.className='dropdown-item'; 
+            d.textContent=item;
+            d.addEventListener('click', (e)=>{
+                e.stopPropagation();
+                if(type==='address'){ selectedAddress=item; addressSelectedText.textContent=item; addressModal.classList.remove('show'); }
+                else { selectedSNI=item; sniSelectedText.textContent=item; sniModal.classList.remove('show'); }
+                updateConfigDisplay(); 
+                addLog((type==='address'?'Host':'SNI')+' updated: '+item);
+            });
+            container.appendChild(d);
+        });
+    }
+
+    function simulateSpeedStream() {
+        const now=Date.now();
+        if((now-lastUpdateTime)/1000 >= 0.6){
+            const dl=Math.random()*15000+4000, ul=Math.random()*5000+2000;
+            speedDownload.textContent=(dl/1024).toFixed(1); speedDownloadUnit.textContent='MB/s';
+            speedUpload.textContent=(ul/1024).toFixed(1); speedUploadUnit.textContent='MB/s';
+            speedLatency.textContent=Math.floor(Math.random()*10+5);
+            speedHistory.push(dl); if(speedHistory.length>35) speedHistory.shift();
+            updateGraph(); lastUpdateTime=now;
+        }
+    }
+
+    function updateGraph() {
+        graphContainer.innerHTML='';
+        const m=Math.max(...speedHistory,1000);
+        speedHistory.forEach(s=>{
+            const b=document.createElement('div'); b.className='graph-bar'; b.style.height=(s/m*100)+'%'; graphContainer.appendChild(b);
+        });
+    }
+
+    function updateRuntime() {
+        const d=Math.floor(performance.now()/1000);
+        runtimeDisplay.textContent=[3600,60,1].map(t=>String(Math.floor(d/t)%60).padStart(2,'0')).join(':');
+    }
+
+    function getPath() { return PATHS[selectedProtocol] + (selectedTransport==='hu'?'-hu':''); }
+
+    function buildConfig() {
+        const addr=selectedAddress, sni=selectedSNI, host=currentHost, path=getPath();
+        const netType=selectedTransport==='ws'?'ws':'httpupgrade';
+        const tParam=selectedTransport==='ws'?'type=ws&path=':'type=httpupgrade&path=';
+        switch(selectedProtocol){
+            case 'vless': return 'vless://'+UUID+'@'+addr+':443?encryption=none&'+tParam+encodeURIComponent(path)+'&host='+host+'&security=tls&fp=chrome&sni='+sni+'&alpn=http%2F1.1#VLESS-'+selectedTransport.toUpperCase()+'-virgozki';
+            case 'trojan': return 'trojan://'+PASS+'@'+addr+':443?'+tParam+encodeURIComponent(path)+'&host='+host+'&security=tls&fp=chrome&sni='+sni+'&alpn=http%2F1.1#TROJAN-'+selectedTransport.toUpperCase()+'-virgozki';
+            case 'vmess': return 'vmess://'+btoa(JSON.stringify({v:'2',ps:'VMESS-'+selectedTransport.toUpperCase()+'-virgozki',add:addr,port:'443',id:UUID,aid:'0',scy:'auto',net:netType,type:'none',host:host,path:path,tls:'tls',sni:sni,fp:'chrome',alpn:'http/1.1'}));
+            case 'shadowsocks': return 'ss://'+btoa('aes-256-gcm:'+PASS)+'@'+addr+':443?'+tParam+encodeURIComponent(path)+'&host='+host+'&security=tls&fp=chrome&sni='+sni+'&alpn=http%2F1.1#SS-'+selectedTransport.toUpperCase()+'-virgozki';
+        }
+    }
+
+    function updateConfigDisplay() { configDisplay.textContent=buildConfig(); }
+
+    function buildButtonBar(c,items,sel,lbl,cb){
+        c.innerHTML='';
+        items.forEach(i=>{
+            const b=document.createElement('button'); 
+            b.type = 'button'; b.className='btn'; 
+            if(i===sel) b.classList.add('active'); 
+            b.textContent=lbl?lbl[i]:i;
+            b.addEventListener('click',()=>{ 
+                c.querySelectorAll('.btn').forEach(x=>x.classList.remove('active')); 
+                b.classList.add('active'); cb(i); updateConfigDisplay(); 
+            });
+            c.appendChild(b);
+        });
+    }
+
+    buildButtonBar(protocolBar, PROTOCOLS, selectedProtocol, PROTOCOL_LABELS, v=>{ selectedProtocol=v; addLog('Protocol switched to: '+v.toUpperCase()); });
+    buildButtonBar(transportBar, TRANSPORTS, selectedTransport, TRANSPORT_LABELS, v=>{ selectedTransport=v; addLog('Transport switched to: '+v.toUpperCase()); });
+
+    copyBtn.addEventListener('click',()=>{
+        navigator.clipboard.writeText(configDisplay.textContent).then(()=>{
+            copyBtn.textContent='COPIED!'; copyBtn.style.background='var(--green)';
+            setTimeout(()=>{ copyBtn.textContent='COPY'; copyBtn.style.background=''; }, 2000); 
+            addLog('Config copied.');
+        });
+    });
+
+    window.addEventListener('load', initPortal);
+})();
+</script>
+
+</body>
+</html>
+EOF

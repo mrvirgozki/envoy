@@ -1,6 +1,6 @@
 #!/bin/bash
 # ==============================================================================
-# VIRGOZKI PANEL • ENVOY EDITION + MANUAL REGION SELECT
+# VIRGOZKI PANEL • NGINX EDITION + MANUAL REGION SELECT
 # ==============================================================================
 
 BOLD='\033[1m'; RESET='\033[0m'
@@ -58,9 +58,9 @@ loading() {
 
 clear
 echo ""
-echo -e "  ${BOLD}${WHITE}VIRGOZKI PANEL (ENVOY EDITION)${RESET}"
+echo -e "  ${BOLD}${WHITE}VIRGOZKI PANEL (NGINX EDITION)${RESET}"
 echo -e "  ${MAGENTA}MADE BY VIRGOZKI${RESET}"
-echo -e "  ${GREEN}✅ MANUAL SELECT • ENVOY PROXY READY${RESET}"
+echo -e "  ${GREEN}✅ MANUAL SELECT • NGINX PROXY READY${RESET}"
 echo ""
 
 PROJECT_ID=$(gcloud config get-value project 2>/dev/null | tr -d '[:space:]')
@@ -147,9 +147,6 @@ esac
 echo ""
 loading "CREATING CONFIG FILES"
 
-# ==============================================
-# ✅ AUTO-CREATE config.json
-# ==============================================
 cat > config.json <<'EOF'
 {
   "log": { "loglevel": "warning" },
@@ -160,7 +157,7 @@ cat > config.json <<'EOF'
   "inbounds": [
     {
       "port": 10000,
-      "listen": "0.0.0.0",
+      "listen": "127.0.0.1",
       "protocol": "trojan",
       "settings": { "clients": [{ "password": "virgozki" }] },
       "streamSettings": {
@@ -171,7 +168,7 @@ cat > config.json <<'EOF'
     },
     {
       "port": 10001,
-      "listen": "0.0.0.0",
+      "listen": "127.0.0.1",
       "protocol": "trojan",
       "settings": { "clients": [{ "password": "virgozki" }] },
       "streamSettings": {
@@ -182,7 +179,7 @@ cat > config.json <<'EOF'
     },
     {
       "port": 10003,
-      "listen": "0.0.0.0",
+      "listen": "127.0.0.1",
       "protocol": "vmess",
       "settings": {
         "clients": [{ "id": "b831381d-6324-4d53-ad4f-8cda48b30811", "alterId": 0 }]
@@ -195,7 +192,7 @@ cat > config.json <<'EOF'
     },
     {
       "port": 10004,
-      "listen": "0.0.0.0",
+      "listen": "127.0.0.1",
       "protocol": "vmess",
       "settings": {
         "clients": [{ "id": "b831381d-6324-4d53-ad4f-8cda48b30811", "alterId": 0 }]
@@ -208,7 +205,7 @@ cat > config.json <<'EOF'
     },
     {
       "port": 10006,
-      "listen": "0.0.0.0",
+      "listen": "127.0.0.1",
       "protocol": "vless",
       "settings": {
         "clients": [{ "id": "b831381d-6324-4d53-ad4f-8cda48b30811" }],
@@ -222,7 +219,7 @@ cat > config.json <<'EOF'
     },
     {
       "port": 10007,
-      "listen": "0.0.0.0",
+      "listen": "127.0.0.1",
       "protocol": "vless",
       "settings": {
         "clients": [{ "id": "b831381d-6324-4d53-ad4f-8cda48b30811" }],
@@ -236,7 +233,7 @@ cat > config.json <<'EOF'
     },
     {
       "port": 10009,
-      "listen": "0.0.0.0",
+      "listen": "127.0.0.1",
       "protocol": "shadowsocks",
       "settings": { "clients": [{ "password": "virgozki", "method": "aes-256-gcm" }] },
       "streamSettings": {
@@ -247,7 +244,7 @@ cat > config.json <<'EOF'
     },
     {
       "port": 10010,
-      "listen": "0.0.0.0",
+      "listen": "127.0.0.1",
       "protocol": "shadowsocks",
       "settings": { "clients": [{ "password": "virgozki", "method": "aes-256-gcm" }] },
       "streamSettings": {
@@ -261,165 +258,13 @@ cat > config.json <<'EOF'
 }
 EOF
 
-# ==============================================
-# ✅ AUTO-CREATE envoy.yaml
-# ==============================================
-cat > envoy.yaml <<'EOF'
-admin:
-  address:
-    socket_address:
-      address: 127.0.0.1
-      port_value: 9901
-static_resources:
-  listeners:
-  - name: listener_0
-    address:
-      socket_address:
-        address: 0.0.0.0
-        port_value: 8080
-    filter_chains:
-    - filters:
-      - name: envoy.filters.network.http_connection_manager
-        typed_config:
-          "@type": type.googleapis.com/envoy.extensions.filters.network.http_connection_manager.v3.HttpConnectionManager
-          stat_prefix: ingress_http
-          route_config:
-            name: local_route
-            virtual_hosts:
-            - name: backend
-              domains: ["*"]
-              routes:
-              - match: { prefix: "/virgozki" }
-                route: { cluster: xray_trojan_ws }
-              - match: { prefix: "/virgozki-hu" }
-                route: { cluster: xray_trojan_hu }
-              - match: { prefix: "/vmess-virgozki" }
-                route: { cluster: xray_vmess_ws }
-              - match: { prefix: "/vmess-virgozki-hu" }
-                route: { cluster: xray_vmess_hu }
-              - match: { prefix: "/vless-virgozki" }
-                route: { cluster: xray_vless_ws }
-              - match: { prefix: "/vless-virgozki-hu" }
-                route: { cluster: xray_vless_hu }
-              - match: { prefix: "/ss-virgozki" }
-                route: { cluster: xray_ss_ws }
-              - match: { prefix: "/ss-virgozki-hu" }
-                route: { cluster: xray_ss_hu }
-              - match: { prefix: "/" }
-                route: { direct_response: { status: 200, body: { filename: "/usr/local/envoy/html/index.html" } } }
-          http_filters:
-          - name: envoy.filters.http.router
-            typed_config:
-              "@type": type.googleapis.com/envoy.extensions.filters.http.router.v3.Router
-  clusters:
-  - name: xray_trojan_ws
-    connect_timeout: 0.25s
-    type: STRICT_DNS
-    lb_policy: ROUND_ROBIN
-    load_assignment:
-      cluster_name: xray_trojan_ws
-      endpoints:
-      - lb_endpoints:
-        - endpoint:
-            address:
-              socket_address: { address: 127.0.0.1, port_value: 10000 }
-  - name: xray_trojan_hu
-    connect_timeout: 0.25s
-    type: STRICT_DNS
-    lb_policy: ROUND_ROBIN
-    load_assignment:
-      cluster_name: xray_trojan_hu
-      endpoints:
-      - lb_endpoints:
-        - endpoint:
-            address:
-              socket_address: { address: 127.0.0.1, port_value: 10001 }
-  - name: xray_vmess_ws
-    connect_timeout: 0.25s
-    type: STRICT_DNS
-    lb_policy: ROUND_ROBIN
-    load_assignment:
-      cluster_name: xray_vmess_ws
-      endpoints:
-      - lb_endpoints:
-        - endpoint:
-            address:
-              socket_address: { address: 127.0.0.1, port_value: 10003 }
-  - name: xray_vmess_hu
-    connect_timeout: 0.25s
-    type: STRICT_DNS
-    lb_policy: ROUND_ROBIN
-    load_assignment:
-      cluster_name: xray_vmess_hu
-      endpoints:
-      - lb_endpoints:
-        - endpoint:
-            address:
-              socket_address: { address: 127.0.0.1, port_value: 10004 }
-  - name: xray_vless_ws
-    connect_timeout: 0.25s
-    type: STRICT_DNS
-    lb_policy: ROUND_ROBIN
-    load_assignment:
-      cluster_name: xray_vless_ws
-      endpoints:
-      - lb_endpoints:
-        - endpoint:
-            address:
-              socket_address: { address: 127.0.0.1, port_value: 10006 }
-  - name: xray_vless_hu
-    connect_timeout: 0.25s
-    type: STRICT_DNS
-    lb_policy: ROUND_ROBIN
-    load_assignment:
-      cluster_name: xray_vless_hu
-      endpoints:
-      - lb_endpoints:
-        - endpoint:
-            address:
-              socket_address: { address: 127.0.0.1, port_value: 10007 }
-  - name: xray_ss_ws
-    connect_timeout: 0.25s
-    type: STRICT_DNS
-    lb_policy: ROUND_ROBIN
-    load_assignment:
-      cluster_name: xray_ss_ws
-      endpoints:
-      - lb_endpoints:
-        - endpoint:
-            address:
-              socket_address: { address: 127.0.0.1, port_value: 10009 }
-  - name: xray_ss_hu
-    connect_timeout: 0.25s
-    type: STRICT_DNS
-    lb_policy: ROUND_ROBIN
-    load_assignment:
-      cluster_name: xray_ss_hu
-      endpoints:
-      - lb_endpoints:
-        - endpoint:
-            address:
-              socket_address: { address: 127.0.0.1, port_value: 10010 }
-EOF
-
-# ==============================================
-# ✅ AUTO-CREATE index.html
-# ==============================================
 cat > index.html <<'EOF'
 <!DOCTYPE html>
 <html>
 <head><title>Virgozki Panel</title></head>
-<body><h1>Welcome to Virgozki Envoy Panel</h1></body>
+<body><h1>Welcome to Virgozki Nginx Panel</h1></body>
 </html>
 EOF
-
-loading "CHECKING REQUIRED FILES"
-for f in config.json envoy.yaml Dockerfile index.html; do
-    if [ ! -f "$f" ]; then
-        echo -e "  ${RED}ERROR: Missing file -> $f${RESET}"
-        exit 1
-    fi
-done
 
 loading "DEPLOYING DIRECTLY TO CLOUD RUN IN ${REGION}"
 gcloud run deploy "$SERVICE_NAME" \
@@ -517,4 +362,4 @@ if [ -n "$GH_TOKEN" ]; then
 fi
 
 rm -f deploy.log
-echo -e "\n  ${GREEN}✅ SCRIPT FINISHED • ENVOY ACTIVE • DEPLOYED SUCCESSFULLY${RESET}"
+echo -e "\n  ${GREEN}✅ SCRIPT FINISHED • NGINX ACTIVE • DEPLOYED SUCCESSFULLY${RESET}"
